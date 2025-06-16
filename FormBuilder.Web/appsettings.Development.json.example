@@ -1,0 +1,17 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft.AspNetCore": "Information",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Information"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=FormBuilder_Dev;Username=postgres;Password=CHANGE_ME"
+  },
+  "Cloudinary": {
+    "CloudName": "CHANGE_ME",
+    "ApiKey": "CHANGE_ME",
+    "ApiSecret": "CHANGE_ME"
+  }
+}

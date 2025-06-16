@@ -1,0 +1,25 @@
+/* Dark Theme */
+body {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+.navbar {
+    background-color: #1f1f1f !important;
+}
+
+.navbar-light .navbar-brand,
+.navbar-light .navbar-nav .nav-link {
+    color: #ffffff !important;
+}
+
+.card {
+    background-color: #1f1f1f;
+    border-color: #333;
+}
+
+.form-control, .form-select {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #ffffff;
+}

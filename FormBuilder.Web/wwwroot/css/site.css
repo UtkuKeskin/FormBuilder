@@ -1,0 +1,44 @@
+/* Base Styles */
+:root {
+    --primary-color: #1976d2;
+    --secondary-color: #6c757d;
+    --success-color: #4caf50;
+    --danger-color: #f44336;
+}
+
+html {
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Navbar Customization */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+/* Footer */
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    white-space: nowrap;
+    line-height: 60px;
+}
+
+/* Utilities */
+.small-method {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Theme Switcher */
+#themeSwitcher {
+    cursor: pointer;
+}

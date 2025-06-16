@@ -1,0 +1,9 @@
+/* Light Theme */
+body {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+.navbar {
+    background-color: #f8f9fa !important;
+}
