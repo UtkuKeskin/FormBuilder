@@ -26,6 +26,21 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        var model = new ErrorViewModel { RequestId = requestId };
+
+        // Log the error details
+        Serilog.Log.Error("Error page visited. RequestId: {RequestId}", requestId);
+
+        return View(model);
     }
+    
+    [Route("404")]
+    public IActionResult NotFound()
+    {
+        Response.StatusCode = 404;
+        return View("NotFound");
+    }
+    
 }
+
