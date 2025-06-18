@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: formbuilder-app
+    runtime: docker
+    repo: https://github.com/UtkuKeskin/FormBuilder.git
+    branch: main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: formbuilder-db
+          property: connectionString
+      - key: Cloudinary__CloudName
+        value: placeholder
+      - key: Cloudinary__ApiKey
+        value: placeholder
+      - key: Cloudinary__ApiSecret
+        value: placeholder
+
+databases:
+  - name: formbuilder-db
+    plan: free
+    databaseName: formbuilder
+    user: formbuilder_user
