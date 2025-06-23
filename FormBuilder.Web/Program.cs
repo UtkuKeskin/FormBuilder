@@ -135,7 +135,7 @@ static string ConvertDatabaseUrl(string databaseUrl)
         var userInfo = uri.UserInfo.Split(':');
         var database = uri.AbsolutePath.TrimStart('/');
         var host = uri.Host;
-        var port = uri.Port;
+        var port = uri.Port > 0 ? uri.Port : 5432;
         var username = userInfo[0];
         var password = userInfo[1];
         
