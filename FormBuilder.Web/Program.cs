@@ -27,9 +27,22 @@ try
     // Add services to the container.
     builder.Services.AddControllersWithViews();
 
+    // Connection String handling for Render
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    
+    // If connection string is empty, try DATABASE_URL (Render format)
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        if (!string.IsNullOrEmpty(databaseUrl))
+        {
+            connectionString = ConvertDatabaseUrl(databaseUrl);
+        }
+    }
+
     // Add DbContext
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseNpgsql(connectionString ?? throw new InvalidOperationException("Connection string not found")));
 
     // Add Identity
     builder.Services.AddDefaultIdentity<User>(options => {
@@ -92,7 +105,15 @@ try
         pattern: "{controller=Home}/{action=Index}/{id?}");
 
     // Admin password update from environment
-    await UpdateAdminPasswordFromEnvironment(app);
+    try
+    {
+        await UpdateAdminPasswordFromEnvironment(app);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Failed to update admin password at startup");
+        // Continue running even if admin password update fails
+    }
 
     app.Run();
 }
@@ -103,6 +124,28 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// Convert DATABASE_URL to .NET connection string format
+static string ConvertDatabaseUrl(string databaseUrl)
+{
+    try
+    {
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':');
+        var database = uri.AbsolutePath.TrimStart('/');
+        var host = uri.Host;
+        var port = uri.Port;
+        var username = userInfo[0];
+        var password = userInfo[1];
+        
+        return $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Failed to convert DATABASE_URL");
+        throw;
+    }
 }
 
 // update Admin password
@@ -136,5 +179,6 @@ static async Task UpdateAdminPasswordFromEnvironment(WebApplication app)
     catch (Exception ex)
     {
         Log.Error(ex, "Failed to update admin password");
+        throw; // Re-throw to be caught by outer try-catch
     }
 }
