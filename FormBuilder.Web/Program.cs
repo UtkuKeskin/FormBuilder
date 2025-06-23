@@ -104,6 +104,13 @@ try
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
 
+        // Apply pending migrations at startup
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.Migrate();
+    }
+
     // Admin password update from environment
     try
     {
