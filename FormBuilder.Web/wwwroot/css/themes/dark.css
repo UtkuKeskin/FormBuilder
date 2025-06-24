@@ -1,3 +1,4 @@
+/* Dark Theme - */
 body {
     background-color: #121212;
     color: #ffffff;
@@ -15,10 +16,115 @@ body {
 .card {
     background-color: #1f1f1f;
     border-color: #333;
+    color: #ffffff;
 }
 
-.form-control, .form-select {
+/* Form Controls - */
+.form-control, 
+.form-select {
     background-color: #2a2a2a;
     border-color: #444;
     color: #ffffff;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #333;
+    border-color: #0d6efd;
+    color: #ffffff;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Labels and Text - HIGH CONTRAST */
+.form-label,
+.card-title,
+.card-text,
+label {
+    color: #f0f0f0 !important;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Links */
+a {
+    color: #66b3ff;
+}
+
+a:hover {
+    color: #99ccff;
+}
+
+/* Dropdown */
+.dropdown-menu {
+    background-color: #2a2a2a;
+    border-color: #444;
+}
+
+.dropdown-item {
+    color: #f0f0f0;
+}
+
+.dropdown-item:hover {
+    background-color: #333;
+    color: #ffffff;
+}
+
+/* Alerts */
+.alert-info {
+    background-color: #1a3a52;
+    border-color: #2d5a7b;
+    color: #a6c8ff;
+}
+
+/* Validation */
+.text-danger {
+    color: #ff6b6b !important;
+}
+
+.text-muted {
+    color: #999 !important;
+}
+
+/* Form Check */
+.form-check-input {
+    background-color: #2a2a2a;
+    border-color: #444;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Tables (for future use) */
+.table {
+    color: #f0f0f0;
+}
+
+.table-bordered {
+    border-color: #444;
+}
+
+/* Placeholders */
+.form-control::placeholder {
+    color: #666;
+    opacity: 1;
+}
+
+/* Password Toggle - Dark Mode */
+.password-toggle-btn {
+    color: #999;
+}
+
+.password-toggle-btn:hover {
+    color: #ccc;
 }
