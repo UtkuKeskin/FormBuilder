@@ -42,3 +42,30 @@ body {
 #themeSwitcher {
     cursor: pointer;
 }
+/* Password Toggle Styles */
+.password-toggle-wrapper {
+    position: relative;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px 10px;
+    z-index: 10;
+}
+
+.password-toggle-btn:hover {
+    color: #495057;
+}
+
+/* Dark mode support */
+.password-toggle-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
