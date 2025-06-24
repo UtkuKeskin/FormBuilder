@@ -1,0 +1,57 @@
+@model FormBuilder.Web.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">@ViewData["Title"]</h2>
+                
+                <form asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="username" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">
+                            @Html.DisplayNameFor(m => m.RememberMe)
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </form>
+                
+                <hr class="my-4">
+                
+                <p class="text-center mb-0">
+                    Don't have an account? 
+                    <a asp-action="Register" asp-route-returnurl="@ViewData["ReturnUrl"]">Register here</a>
+                </p>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-3" role="alert">
+            <i class="fas fa-info-circle"></i> 
+            <strong>Read-Only Mode:</strong> You can view public templates without logging in.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
