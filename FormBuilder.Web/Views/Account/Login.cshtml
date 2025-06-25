@@ -42,6 +42,17 @@
                 </form>
                 
                 <hr class="my-4">
+
+            <div class="text-center mb-3">
+                <p class="text-muted">Or login with:</p>
+                <form asp-action="ExternalLogin" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
+                    <button type="submit" class="btn btn-outline-danger" name="provider" value="Google">
+                        <i class="fab fa-google"></i> Login with Google
+                    </button>
+                </form>
+            </div>
+
+<hr class="my-4">
                 
                 <p class="text-center mb-0">
                     Don't have an account? 

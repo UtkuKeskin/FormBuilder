@@ -70,9 +70,23 @@ try
 })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+    
+    // Google Authentication
+    var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+    var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+    if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+    {
+        builder.Services.AddAuthentication()
+            .AddGoogle(options =>
+            {
+                options.ClientId = googleClientId;
+                options.ClientSecret = googleClientSecret;
+            });
+    }
 
     // Cookie Configuration
-builder.Services.ConfigureApplicationCookie(options =>
+    builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(5);
@@ -95,11 +109,25 @@ builder.Services.AddAuthorization(options =>
         .AddCheck<StartupHealthCheck>("startup", tags: new[] { "ready" });
 
     // Configure for Render
-    builder.WebHost.ConfigureKestrel(serverOptions =>
+    // Configure for Render
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    var port = Environment.GetEnvironmentVariable("PORT");
+    if (!string.IsNullOrEmpty(port))
     {
-        var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+        // Production (Render)
         serverOptions.ListenAnyIP(int.Parse(port));
-    });
+    }
+    else
+    {
+        // Local development
+        serverOptions.ListenLocalhost(5175);
+        serverOptions.ListenLocalhost(7286, listenOptions =>
+        {
+            listenOptions.UseHttps();
+        });
+    }
+});
 
     var app = builder.Build();
 

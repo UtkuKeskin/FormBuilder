@@ -93,19 +93,105 @@ namespace FormBuilder.Web.Controllers
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
+        // GET: /Account/AccessDenied
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+        
+        // GET: /Account/ExternalLogin
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public IActionResult ExternalLogin(string provider, string? returnUrl = null)
+        {
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+        // GET: /Account/ExternalLoginCallback
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        {
+            if (remoteError != null)
+            {
+                ModelState.AddModelError(string.Empty, $"Error from external provider: {remoteError}");
+                return View(nameof(Login));
+            }
+            
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+            
+            var result = await _signInManager.ExternalLoginSignInAsync(
+                info.LoginProvider, 
+                info.ProviderKey, 
+                isPersistent: false);
+                
+            if (result.Succeeded)
+            {
+                var email = info.Principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                if (!string.IsNullOrEmpty(email))
+                {
+                    await UpdateLastLoginAsync(email);
+                }
+                return RedirectToLocal(returnUrl);
+            }
+            
+            // If user doesn't exist, create new one
+            var newEmail = info.Principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (newEmail != null)
+            {
+                var user = new User
+                {
+                    UserName = newEmail,
+                    Email = newEmail,
+                    CreatedAt = DateTime.UtcNow,
+                    Theme = "light",
+                    Language = "en"
+                };
+                
+                var createResult = await _userManager.CreateAsync(user);
+                if (createResult.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, "User");
+                    await _userManager.AddLoginAsync(user, info);
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    return RedirectToLocal(returnUrl);
+                }
+            }
+            
+            ViewData["ReturnUrl"] = returnUrl;
+            return View("Login");
+        }
+
         // Helper Methods 
         private async Task<IdentityResult> CreateUserAsync(RegisterViewModel model)
         {
-            var user = new User 
-            { 
-                UserName = model.Email, 
+            var user = new User
+            {
+                UserName = model.Email,
                 Email = model.Email,
                 CreatedAt = DateTime.UtcNow,
                 Theme = "light",
                 Language = "en"
             };
-            
-            return await _userManager.CreateAsync(user, model.Password);
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (result.Succeeded)
+            {
+                // Add User role to new users
+                await _userManager.AddToRoleAsync(user, "User");
+            }
+
+            return result;
         }
 
         private async Task<IActionResult> SignInAndRedirect(string email, string? returnUrl)
