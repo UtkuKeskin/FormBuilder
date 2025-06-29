@@ -123,3 +123,103 @@ main {
     color: white;
     border-color: var(--primary-color);
 }
+
+/* Autocomplete Styles */
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    top: 100%;
+    left: 0;
+    margin-top: 2px;
+}
+
+.autocomplete-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background-color: #f8f9fa;
+}
+
+/* Drag & Drop Styles */
+[data-sortable-item] {
+    transition: all 0.3s;
+}
+
+[data-sortable-item].dragging {
+    opacity: 0.4;
+}
+
+[data-sortable-item].drag-over {
+    border-top: 2px solid #0d6efd;
+}
+
+[data-upload-area] {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.25rem;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+[data-upload-area].highlight {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+/* Question Manager Styles */
+.question-item {
+    transition: all 0.3s;
+}
+
+.question-handle {
+    cursor: move;
+}
+
+.question-item.dragging {
+    opacity: 0.5;
+}
+
+.preview-question {
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+}
+
+/* Table Actions Styles */
+[data-clickable-rows="true"] tbody tr {
+    transition: background-color 0.2s;
+}
+
+[data-clickable-rows="true"] tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.selected-info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 0.25rem;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.context-menu {
+    position: absolute;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    display: none;
+    z-index: 1050;
+}
+
+/* Validation Styles */
+.invalid-feedback {
+    display: block;
+}
