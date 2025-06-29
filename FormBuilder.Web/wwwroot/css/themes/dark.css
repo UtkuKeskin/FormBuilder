@@ -6,6 +6,7 @@ body {
 
 .navbar {
     background-color: #1f1f1f !important;
+    border-bottom-color: #333 !important;
 }
 
 .navbar-light .navbar-brand,
@@ -13,10 +14,22 @@ body {
     color: #ffffff !important;
 }
 
+.navbar-light .navbar-nav .nav-link:hover {
+    color: #66b3ff !important;
+}
+
+.navbar-light .navbar-toggler {
+    border-color: rgba(255,255,255,.3);
+}
+
+.navbar-light .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.7%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+
 .card {
     background-color: #1f1f1f;
     border-color: #333;
-    color: #ffffff;
 }
 
 /* Form Controls - */
@@ -54,6 +67,17 @@ label {
     border-color: #0a58ca;
 }
 
+.btn-outline-primary {
+    color: #66b3ff;
+    border-color: #66b3ff;
+}
+
+.btn-outline-primary:hover {
+    background-color: #66b3ff;
+    border-color: #66b3ff;
+    color: #000;
+}
+
 /* Links */
 a {
     color: #66b3ff;
@@ -76,6 +100,15 @@ a:hover {
 .dropdown-item:hover {
     background-color: #333;
     color: #ffffff;
+}
+
+.footer {
+    background-color: #1f1f1f !important;
+    border-top-color: #333 !important;
+}
+
+.footer .text-muted {
+    color: #999 !important;
 }
 
 /* Alerts */

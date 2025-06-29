@@ -1,54 +1,56 @@
-// Theme Management
-// Theme Management
-async function initThemeSwitcher() {
-    const switcher = document.getElementById('themeSwitcher');
-    if (!switcher) return;
-    const savedTheme = getCookie('theme') || 'light';
-    
-    applyTheme(savedTheme);
-    switcher.checked = savedTheme === 'dark';
-    
-    switcher.addEventListener('change', handleThemeChange);
-}
-
-async function handleThemeChange(e) {
-    const theme = e.target.checked ? 'dark' : 'light';
-    applyTheme(theme);
-    setCookie('theme', theme, 365);
-    
-    // Update server-side preference if logged in
-    try {
-        await fetch('/Settings/UpdateTheme', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'RequestVerificationToken': document.querySelector('[name="__RequestVerificationToken"]')?.value || ''
-            },
-            body: `theme=${theme}`
-        });
-    } catch (error) {
-        console.error('Failed to update theme preference:', error);
-    }
-}
-
-function applyTheme(theme) {
-    const themeLink = document.getElementById('theme-style');
-    themeLink.href = `/css/themes/${theme}.css`;
-}
-
-// Cookie Helpers
-function setCookie(name, value, days) {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString();
-    document.cookie = `${name}=${value}; expires=${expires}; path=/`;
-}
-
-function getCookie(name) {
-    return document.cookie.split('; ')
-        .find(row => row.startsWith(name + '='))
-        ?.split('=')[1];
-}
-
-// Initialize on DOM ready
+// Main Application JavaSc
 document.addEventListener('DOMContentLoaded', function() {
-    initThemeSwitcher();
+    'use strict';
+    
+    // Initialize all modules
+    initializeModules();
+    
+    // Initialize Bootstrap tooltips
+    initializeTooltips();
 });
+
+// Initialize all modules
+function initializeModules() {
+    // Core modules
+    if (typeof ThemeManager !== 'undefined') ThemeManager.init();
+    if (typeof LanguageSwitcher !== 'undefined') LanguageSwitcher.init();
+    
+    // Feature modules (will be use later)
+    if (typeof FormValidation !== 'undefined') FormValidation.init();
+    if (typeof Autocomplete !== 'undefined') Autocomplete.init();
+    if (typeof DragDrop !== 'undefined') DragDrop.init();
+    if (typeof CloudinaryUpload !== 'undefined') CloudinaryUpload.init();
+    if (typeof TableActions !== 'undefined') TableActions.init();
+}
+
+// Initialize Bootstrap tooltips
+function initializeTooltips() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+// Global utility functions
+window.FormBuilder = {
+    // Show toast notification
+    showToast: function(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        // TODO: Implement toast notifications
+    },
+    
+    // Show loading spinner
+    showLoading: function() {
+        console.log('Loading...');
+        // TODO: Implement loading spinner
+    },
+    
+    // Hide loading spinner
+    hideLoading: function() {
+        console.log('Loading complete');
+        // TODO: Implement loading spinner
+    },
+    
+    // Get utility functions
+    utils: Utils
+};
