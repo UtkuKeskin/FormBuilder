@@ -11,6 +11,9 @@ using FormBuilder.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Localization;
 using FormBuilder.Web.Resources;
 using Microsoft.Extensions.Localization;
+using FormBuilder.Infrastructure.Services;
+using FormBuilder.Core.Interfaces;
+using FormBuilder.Web.Profiles;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -48,6 +51,12 @@ try
     
     // Add UnitOfWork
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+    // Add CloudinaryService
+    builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+    // Add AutoMapper
+    builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 
     // Add Identity
@@ -218,7 +227,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     }
 
     //
-    
+
 app.Run();
 }
 catch (Exception ex)

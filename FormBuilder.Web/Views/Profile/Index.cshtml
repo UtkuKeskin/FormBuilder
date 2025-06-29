@@ -1,0 +1,76 @@
+@model UserViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">My Profile</h3>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9">@Model.Email</dd>
+
+                        <dt class="col-sm-3">Username</dt>
+                        <dd class="col-sm-9">@Model.UserName</dd>
+
+                        <dt class="col-sm-3">Role</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.IsAdmin)
+                            {
+                                <span class="badge bg-danger">Admin</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary">User</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">Theme</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-secondary">@Model.Theme</span>
+                        </dd>
+
+                        <dt class="col-sm-3">Language</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-secondary">@Model.Language</span>
+                        </dd>
+
+                        <dt class="col-sm-3">Last Login</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.LastLoginAt.HasValue)
+                            {
+                                @Model.LastLoginAt.Value.ToString("dd MMM yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Never</span>
+                            }
+                        </dd>
+                    </dl>
+
+                    <div class="mt-4">
+                        <a asp-action="Edit" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </a>
+                        <a asp-controller="Template" asp-action="MyTemplates" class="btn btn-secondary">
+                            <i class="fas fa-file-alt"></i> My Templates
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

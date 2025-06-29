@@ -1,4 +1,4 @@
-// Main Application JavaSc
+// Main Application JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
     
@@ -15,12 +15,13 @@ function initializeModules() {
     if (typeof ThemeManager !== 'undefined') ThemeManager.init();
     if (typeof LanguageSwitcher !== 'undefined') LanguageSwitcher.init();
     
-    // Feature modules (will be use later)
+    // Feature modules
     if (typeof FormValidation !== 'undefined') FormValidation.init();
     if (typeof Autocomplete !== 'undefined') Autocomplete.init();
     if (typeof DragDrop !== 'undefined') DragDrop.init();
     if (typeof CloudinaryUpload !== 'undefined') CloudinaryUpload.init();
     if (typeof TableActions !== 'undefined') TableActions.init();
+    if (typeof QuestionManager !== 'undefined') QuestionManager.init();
 }
 
 // Initialize Bootstrap tooltips
