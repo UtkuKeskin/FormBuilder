@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using FormBuilder.Core.Interfaces;
 using FormBuilder.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Localization;
+using FormBuilder.Web.Resources;
+using Microsoft.Extensions.Localization;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -25,9 +28,6 @@ try
 
     // Serilog add
     builder.Host.UseSerilog();
-
-    // Add services to the container.
-    builder.Services.AddControllersWithViews();
 
     // Connection String handling for Render
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -96,8 +96,39 @@ try
     options.SlidingExpiration = true;
 });
 
+// Add Localization
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { "en", "ru" };
+    options.SetDefaultCulture("en");
+    options.AddSupportedCultures(supportedCultures);
+    options.AddSupportedUICultures(supportedCultures);
+    
+    // Cookie provider
+    options.RequestCultureProviders.Clear();
+    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
+});
+
+// MVC configuration
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
+    .AddDataAnnotationsLocalization(options =>
+    {
+        options.DataAnnotationLocalizerProvider = (type, factory) =>
+            factory.Create(typeof(SharedResource));
+    });
+
+    // Shared Resource Localizer
+    builder.Services.AddSingleton<IStringLocalizer>(provider =>
+    {
+        var factory = provider.GetRequiredService<IStringLocalizerFactory>();
+        return factory.Create(typeof(SharedResource));
+    }); 
+// üstü değiştirdik. 
 // Add Authorization policies
-builder.Services.AddAuthorization(options =>
+    builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("AuthenticatedOnly", policy => policy.RequireAuthenticatedUser());
@@ -108,7 +139,6 @@ builder.Services.AddAuthorization(options =>
     builder.Services.AddHealthChecks()
         .AddCheck<StartupHealthCheck>("startup", tags: new[] { "ready" });
 
-    // Configure for Render
     // Configure for Render
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -150,10 +180,15 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         app.UseExceptionHandler("/Home/Error");
     }
 
+    // Static files should be first
     app.UseStaticFiles();
+
+    // Then routing
     app.UseRouting();
 
-    // Add Authentication & Authorization
+    app.UseRequestLocalization();
+
+    // Then Authentication & Authorization
     app.UseAuthentication();
     app.UseAuthorization();
 
@@ -182,7 +217,9 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         // Continue running even if admin password update fails
     }
 
-    app.Run();
+    //
+    
+app.Run();
 }
 catch (Exception ex)
 {

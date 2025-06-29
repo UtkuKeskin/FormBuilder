@@ -8,71 +8,125 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
     <!-- Font Awesome -->
-    <!--<link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" /> -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <!-- Theme CSS -->
     <link rel="stylesheet" href="~/css/themes/light.css" id="theme-style" />
 </head>
 <body>
-    @Html.AntiForgeryToken()
+    <!-- Anti-forgery token for AJAX -->
+    @if (User.Identity?.IsAuthenticated ?? false)
+    {
+        @Html.AntiForgeryToken()
+    }
+    
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
         <div class="container">
-            <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+            <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-file-alt"></i> FormBuilder
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#navbarContent" aria-controls="navbarContent" 
+                    aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Left Menu -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Template" asp-action="Index">
+                            <i class="fas fa-list"></i> Templates
+                        </a>
                     </li>
                 </ul>
                 
-                <!-- Search Box -->
-                <form class="d-flex me-3" action="/Search" method="get">
-                    <input class="form-control" type="search" placeholder="Search templates..." name="q">
-                    <button class="btn btn-outline-primary ms-2" type="submit">
-                        <i class="fas fa-search"></i>
-                    </button>
+                <!-- Center Search -->
+                <form class="d-flex mx-auto search-form" asp-controller="Search" 
+                      asp-action="Results" method="get">
+                    <div class="input-group">
+                        <input class="form-control" type="search" 
+                               placeholder="Search templates..." 
+                               name="q" aria-label="Search">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
                 </form>
                 
-                <!-- Theme Switcher -->
-                <div class="form-check form-switch me-3">
-                    <input class="form-check-input" type="checkbox" id="themeSwitcher">
-                    <label class="form-check-label" for="themeSwitcher">
-                        <i class="fas fa-moon"></i>
-                    </label>
-                </div>
-                
-                <!-- Login/Register will go here -->
-                <partial name="_LoginPartial" />
+                <!-- Right Menu -->
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                    <!-- Theme Switcher -->
+                    <li class="nav-item me-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="themeSwitcher">
+                            <label class="form-check-label" for="themeSwitcher">
+                                <i class="fas fa-moon"></i>
+                            </label>
+                        </div>
+                    </li>
+                    
+                    <!-- User Menu -->
+                    <partial name="_LoginPartial" />
+                </ul>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main role="main" class="pb-3">
-        @RenderBody()
+    <main role="main" class="flex-fill">
+        <div class="container mt-4">
+            @RenderBody()
+        </div>
     </main>
 
     <!-- Footer -->
-    <footer class="border-top footer text-muted">
-        <div class="container text-center py-3">
-            &copy; 2024 - FormBuilder - <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>About FormBuilder</h5>
+                    <p class="text-muted">Create custom forms, surveys, and questionnaires with ease.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted">Help Center</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy" class="text-muted">Privacy Policy</a></li>
+                        <li><a href="#" class="text-muted">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact Us</h5>
+                    <p class="text-muted">
+                        <i class="fas fa-envelope"></i> support@formbuilder.com<br>
+                        <i class="fas fa-phone"></i> +1 234 567 8900
+                    </p>
+                </div>
+            </div>
+            <hr>
+            <p class="text-center text-muted mb-0">
+                &copy; 2024 FormBuilder. All rights reserved.
+            </p>
         </div>
     </footer>
 
-    <!-- jQuery -->
+    <!-- Scripts -->
     <script src="~/lib/jquery/jquery.min.js"></script>
-    <!-- Bootstrap JS -->
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
+    
+    <!-- Component-based JS loading -->
+    <script src="~/js/modules/utils.js" asp-append-version="true"></script>
+    <script src="~/js/modules/theme-manager.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     
     @await RenderSectionAsync("Scripts", required: false)

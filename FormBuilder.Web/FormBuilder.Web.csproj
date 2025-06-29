@@ -26,9 +26,10 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+  <TargetFramework>net8.0</TargetFramework>
+  <Nullable>enable</Nullable>
+  <ImplicitUsings>enable</ImplicitUsings>
+  <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,4 +38,11 @@
   </Content>
   </ItemGroup>
 
-</Project>
+  <ItemGroup>
+  <EmbeddedResource Include="Resources\SharedResource.resx" />
+  <EmbeddedResource Include="Resources\SharedResource.ru.resx">
+    <WithCulture>true</WithCulture>
+  </EmbeddedResource>
+</ItemGroup>
+
+</Project> 

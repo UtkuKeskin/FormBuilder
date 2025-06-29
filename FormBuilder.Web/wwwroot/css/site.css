@@ -13,8 +13,22 @@ html {
 }
 
 body {
-    margin-bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Main content flex */
+main {
+    flex: 1 0 auto;
+}
+
+/* Footer */
+.footer {
+    flex-shrink: 0;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
 }
 
 /* Navbar Customization */
@@ -23,26 +37,24 @@ body {
     font-size: 1.25rem;
 }
 
-/* Footer */
-.footer {
-    position: absolute;
-    bottom: 0;
+/* Search Form */
+.search-form {
     width: 100%;
-    white-space: nowrap;
-    line-height: 60px;
+    max-width: 400px;
 }
 
-/* Utilities */
-.small-method {
-    max-height: 300px;
-    overflow-y: auto;
+@media (max-width: 768px) {
+    .search-form {
+        margin: 1rem 0;
+    }
 }
 
 /* Theme Switcher */
 #themeSwitcher {
     cursor: pointer;
 }
-/* Password Toggle Styles */
+
+/* Password Toggle */
 .password-toggle-wrapper {
     position: relative;
 }
@@ -60,12 +72,54 @@ body {
     z-index: 10;
 }
 
+/* Language Dropdown */
+.dropdown-item img {
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+}
+
+/* Mobile Responsive */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        padding-top: 1rem;
+    }
+    
+    .search-form {
+        order: -1;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Utilities */
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+}
+
+/* Utilities */
+.small-method {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Password Toggle : Hover ve Focus */
 .password-toggle-btn:hover {
     color: #495057;
 }
 
-/* Dark mode support */
 .password-toggle-btn:focus {
     outline: none;
     box-shadow: none;
+}
+/* Language Switcher Buttons */
+.btn-group[role="group"] button[data-language] {
+    min-width: 35px;
+    font-weight: 500;
+}
+
+.btn-group[role="group"] button[data-language].active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
 }
