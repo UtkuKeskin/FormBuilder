@@ -13,6 +13,9 @@ namespace FormBuilder.Infrastructure.Repositories
         private IRepository<Topic>? _topics;
         private IRepository<Comment>? _comments;
         private IRepository<Like>? _likes;
+        private IRepository<TemplateTag>? _templateTags;
+        private IRepository<TemplateAccess>? _templateAccesses;
+        private IRepository<User>? _users;
 
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -37,7 +40,21 @@ namespace FormBuilder.Infrastructure.Repositories
         public IRepository<Like> Likes => 
             _likes ??= new Repository<Like>(_context);
 
+        public IRepository<TemplateTag> TemplateTags => 
+            _templateTags ??= new Repository<TemplateTag>(_context);
+
+        public IRepository<TemplateAccess> TemplateAccesses => 
+            _templateAccesses ??= new Repository<TemplateAccess>(_context);
+
+        public IRepository<User> Users => 
+            _users ??= new Repository<User>(_context);
+
         public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> SaveAsync() // SaveAsync implementation
         {
             return await _context.SaveChangesAsync();
         }

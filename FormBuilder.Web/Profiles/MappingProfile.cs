@@ -1,6 +1,7 @@
 using AutoMapper;
 using FormBuilder.Core.Entities;
 using FormBuilder.Web.ViewModels;
+using FormBuilder.Web.ViewModels.Template;
 
 namespace FormBuilder.Web.Profiles
 {

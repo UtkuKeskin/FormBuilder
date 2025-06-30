@@ -11,6 +11,11 @@ namespace FormBuilder.Core.Interfaces
         IRepository<Comment> Comments { get; }
         IRepository<Like> Likes { get; }
 
+        IRepository<TemplateTag> TemplateTags { get; }
+        IRepository<TemplateAccess> TemplateAccesses { get; }
+        
+
         Task<int> SaveChangesAsync();
+        Task<int> SaveAsync();
     }
 }

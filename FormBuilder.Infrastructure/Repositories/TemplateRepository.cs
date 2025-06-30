@@ -50,5 +50,10 @@ namespace FormBuilder.Infrastructure.Repositories
                 .Take(count)
                 .ToListAsync();
         }
+
+        public void Delete(Template template)
+        {
+            _context.Templates.Remove(template);
+        }
     }
 }

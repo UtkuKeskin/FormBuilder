@@ -2,6 +2,10 @@ using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using FormBuilder.Core.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace FormBuilder.Infrastructure.Services
 {
@@ -9,10 +13,12 @@ namespace FormBuilder.Infrastructure.Services
     {
         private readonly Cloudinary _cloudinary;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<CloudinaryService> _logger;
 
-        public CloudinaryService(IConfiguration configuration)
+        public CloudinaryService(IConfiguration configuration, ILogger<CloudinaryService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
             
             var account = new Account(
                 configuration["Cloudinary:CloudName"],
@@ -49,6 +55,7 @@ namespace FormBuilder.Infrastructure.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Image upload failed");
                 throw new Exception("Image upload failed", ex);
             }
         }
@@ -65,8 +72,9 @@ namespace FormBuilder.Infrastructure.Services
                 
                 return result.Result == "ok";
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error deleting image from Cloudinary");
                 return false;
             }
         }

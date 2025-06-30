@@ -45,5 +45,19 @@ namespace FormBuilder.Infrastructure.Repositories
         {
             _dbSet.Remove(entity);
         }
+         public void Delete(T entity)
+        {
+            _dbSet.Remove(entity);
+        }
+
+        public IQueryable<T> GetQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
+
+        public IQueryable<T> GetAll()
+        {
+            return _dbSet.AsQueryable();
+        }
     }
 }
