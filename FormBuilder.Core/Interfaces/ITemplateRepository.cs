@@ -1,4 +1,6 @@
 using FormBuilder.Core.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FormBuilder.Core.Interfaces
 {
@@ -8,5 +10,6 @@ namespace FormBuilder.Core.Interfaces
         Task<IEnumerable<Template>> GetUserTemplatesAsync(string userId);
         Task<IEnumerable<Template>> GetLatestTemplatesAsync(int count);
         Task<IEnumerable<Template>> GetPopularTemplatesAsync(int count);
+        void Delete(Template template);
     }
 }

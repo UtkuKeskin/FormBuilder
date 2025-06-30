@@ -161,3 +161,27 @@ a:hover {
 .password-toggle-btn:hover {
     color: #ccc;
 }
+/* Dark theme text visibility */
+[data-theme="dark"] body,
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] div,
+[data-theme="dark"] li,
+[data-theme="dark"] .footer,
+[data-theme="dark"] .footer * {
+    color: #f0f0f0;
+}
+
+[data-theme="dark"] .footer {
+    background-color: #1f1f1f;
+    border-top-color: #333;
+}
+
+[data-theme="dark"] .footer a {
+    color: #66b3ff;
+}
+
+[data-theme="dark"] .footer a:hover {
+    color: #99ccff;
+    text-decoration: underline;
+}

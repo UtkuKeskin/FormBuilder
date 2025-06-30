@@ -48,7 +48,8 @@ try
     // Add DbContext
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseNpgsql(connectionString ?? throw new InvalidOperationException("Connection string not found")));
-    
+    builder.Services.AddScoped<ITemplateService, TemplateService>();
+
     // Add UnitOfWork
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
