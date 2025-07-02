@@ -22,5 +22,17 @@ namespace FormBuilder.Web.ViewModels.Template
         // For list display
         public bool CanEdit { get; set; }
         public bool CanDelete { get; set; }
+        
+        // Questions
+        public List<QuestionViewModel> Questions { get; set; } = new();
+    }
+    
+    public class QuestionViewModel
+    {
+        public string Type { get; set; } // string, text, integer, checkbox
+        public string Question { get; set; }
+        public string Description { get; set; }
+        public bool ShowInTable { get; set; }
+        public int Order { get; set; }
     }
 }

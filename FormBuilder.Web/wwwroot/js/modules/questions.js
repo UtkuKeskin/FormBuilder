@@ -16,83 +16,114 @@ const QuestionManager = (function() {
         checkbox: 0
     };
     
+    let initialized = false;
+    
     // Initialize
     function init() {
+        // Prevent multiple initialization
+        if (initialized) return;
+        initialized = true;
+        
         // Count existing questions
         countExistingQuestions();
         
-        // Initialize add question buttons
-        initAddQuestionButtons();
+        // Initialize existing buttons (don't create new ones)
+        initExistingButtons();
         
         // Initialize existing questions
         initExistingQuestions();
         
         // Initialize question preview
         initQuestionPreview();
+        
+        // Update button states and counts
+        updateButtonStates();
+        
+        // Hide empty message if questions exist
+        updateEmptyMessage();
     }
     
     // Count existing questions
     function countExistingQuestions() {
+        // Reset counts
+        Object.keys(questionCount).forEach(type => {
+            questionCount[type] = 0;
+        });
+        
+        // Count actual questions
         Object.keys(questionTypes).forEach(type => {
-            const questions = document.querySelectorAll(`[data-question-type="${type}"]`);
+            const questions = document.querySelectorAll(`.question-item[data-question-type="${type}"]`);
             questionCount[type] = questions.length;
         });
     }
     
-    // Initialize add question buttons
-    function initAddQuestionButtons() {
-        const container = document.querySelector('#question-type-selector');
-        if (!container) return;
-        
-        Object.entries(questionTypes).forEach(([type, config]) => {
-            const button = createAddQuestionButton(type, config);
-            container.appendChild(button);
+    // Initialize existing buttons in HTML
+    function initExistingButtons() {
+        const buttons = document.querySelectorAll('.question-type-btn[data-question-type]');
+        buttons.forEach(button => {
+            // Remove any existing listeners first
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            
+            const type = newButton.dataset.questionType;
+            newButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                addQuestion(type);
+            });
         });
-    }
-    
-    // Create add question button
-    function createAddQuestionButton(type, config) {
-        const button = document.createElement('button');
-        button.className = 'btn btn-outline-primary m-1';
-        button.innerHTML = `<i class="${config.icon}"></i> ${config.label}`;
-        button.dataset.questionType = type;
-        
-        // Disable if max reached
-        if (questionCount[type] >= 4) {
-            button.disabled = true;
-            button.title = `Maximum ${type} questions reached`;
-        }
-        
-        button.addEventListener('click', () => addQuestion(type));
-        
-        return button;
     }
     
     // Add question
     function addQuestion(type) {
+        // Re-count to ensure accuracy
+        countExistingQuestions();
+        
         if (questionCount[type] >= 4) {
             alert(`Maximum ${questionTypes[type].label} questions reached`);
             return;
         }
         
         const container = document.querySelector('#questions-container');
-        const questionNumber = questionCount[type] + 1;
-        const questionHtml = createQuestionHtml(type, questionNumber);
+        const emptyMessage = document.querySelector('#no-questions-message');
         
-        container.insertAdjacentHTML('beforeend', questionHtml);
+        // Hide empty message
+        if (emptyMessage) {
+            emptyMessage.style.display = 'none';
+        }
         
-        // Initialize new question
-        const newQuestion = container.lastElementChild;
+        // Find the highest number for this type
+        const existingNumbers = [];
+        document.querySelectorAll(`.question-item[data-question-type="${type}"]`).forEach(q => {
+            const num = parseInt(q.dataset.questionNumber);
+            if (!isNaN(num)) existingNumbers.push(num);
+        });
+        
+        const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+        const questionHtml = createQuestionHtml(type, nextNumber);
+        
+        // Insert before empty message or at the end
+        if (emptyMessage) {
+            emptyMessage.insertAdjacentHTML('beforebegin', questionHtml);
+        } else {
+            container.insertAdjacentHTML('beforeend', questionHtml);
+        }
+        
+        // Initialize new question - find it specifically
+        const allQuestions = container.querySelectorAll('.question-item');
+        const newQuestion = allQuestions[allQuestions.length - 1];
         initializeQuestion(newQuestion);
         
+        // Update count and UI
         questionCount[type]++;
-        updateAddButtons();
+        updateButtonStates();
+        updatePreview();
     }
     
     // Create question HTML
     function createQuestionHtml(type, number) {
         const typeConfig = questionTypes[type];
-        const prefix = `Custom${capitalizeFirst(type)}${number}`;
+        const typeCapitalized = type.charAt(0).toUpperCase() + type.slice(1);
+        const prefix = `Custom${typeCapitalized}${number}`;
         
         return `
             <div class="question-item card mb-3" data-question-type="${type}" data-question-number="${number}">
@@ -143,15 +174,18 @@ const QuestionManager = (function() {
     
     // Initialize question
     function initializeQuestion(question) {
-        // Remove button
+        // Remove button - clear existing listeners first
         const removeBtn = question.querySelector('.remove-question');
         if (removeBtn) {
-            removeBtn.addEventListener('click', () => removeQuestion(question));
+            const newRemoveBtn = removeBtn.cloneNode(true);
+            removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+            newRemoveBtn.addEventListener('click', () => removeQuestion(question));
         }
         
         // Question text change
         const questionText = question.querySelector('.question-text');
-        if (questionText) {
+        if (questionText && !questionText.hasAttribute('data-initialized')) {
+            questionText.setAttribute('data-initialized', 'true');
             questionText.addEventListener('input', updatePreview);
         }
     }
@@ -162,59 +196,102 @@ const QuestionManager = (function() {
         
         if (confirm('Are you sure you want to remove this question?')) {
             questionElement.remove();
-            questionCount[type]--;
-            updateAddButtons();
+            countExistingQuestions();
+            updateButtonStates();
             renumberQuestions(type);
             updatePreview();
+            updateEmptyMessage();
         }
     }
     
     // Renumber questions after removal
     function renumberQuestions(type) {
-        const questions = document.querySelectorAll(`[data-question-type="${type}"]`);
+        const questions = document.querySelectorAll(`.question-item[data-question-type="${type}"]`);
         
         questions.forEach((question, index) => {
             const newNumber = index + 1;
+            const oldNumber = question.dataset.questionNumber;
             question.dataset.questionNumber = newNumber;
             
             // Update header text
             const header = question.querySelector('.question-handle');
             if (header) {
-                header.innerHTML = header.innerHTML.replace(/\d+$/, newNumber);
+                const typeConfig = questionTypes[type];
+                header.innerHTML = `
+                    <i class="fas fa-grip-vertical text-muted"></i>
+                    <i class="${typeConfig.icon}"></i> ${typeConfig.label} ${newNumber}
+                `;
             }
             
-            // Update input names
-            updateQuestionInputNames(question, type, newNumber);
+            // Update input names only if number changed
+            if (oldNumber != newNumber) {
+                updateQuestionInputNames(question, type, newNumber);
+            }
         });
     }
     
     // Update question input names
     function updateQuestionInputNames(question, type, number) {
-        const prefix = `Custom${capitalizeFirst(type)}${number}`;
+        const typeCapitalized = type.charAt(0).toUpperCase() + type.slice(1);
+        const prefix = `Custom${typeCapitalized}${number}`;
         const inputs = question.querySelectorAll('input[name], textarea[name]');
         
         inputs.forEach(input => {
             const nameParts = input.name.match(/Custom(\w+)(\d+)(\w+)/);
             if (nameParts) {
-                input.name = `${prefix}${nameParts[3]}`;
+                const oldName = input.name;
+                const newName = `${prefix}${nameParts[3]}`;
+                input.name = newName;
+                
                 if (input.id) {
-                    input.id = `${prefix}${nameParts[3]}`;
+                    const oldId = input.id;
+                    const newId = `${prefix}${nameParts[3]}`;
+                    input.id = newId;
+                    
+                    // Update label if exists
+                    const label = question.querySelector(`label[for="${oldId}"]`);
+                    if (label) {
+                        label.setAttribute('for', newId);
+                    }
                 }
             }
         });
     }
     
-    // Update add buttons state
-    function updateAddButtons() {
+    // Update button states and counts
+    function updateButtonStates() {
         Object.keys(questionTypes).forEach(type => {
-            const button = document.querySelector(`button[data-question-type="${type}"]`);
+            const button = document.querySelector(`.question-type-btn[data-question-type="${type}"]`);
             if (button) {
-                button.disabled = questionCount[type] >= 4;
-                button.title = questionCount[type] >= 4 
-                    ? `Maximum ${type} questions reached` 
-                    : '';
+                const count = questionCount[type];
+                const countSpan = button.querySelector('.question-count');
+                
+                // Update count display
+                if (countSpan) {
+                    countSpan.textContent = `(${count}/4)`;
+                }
+                
+                // Update disabled state
+                button.disabled = count >= 4;
+                if (count >= 4) {
+                    button.classList.add('disabled');
+                    button.title = `Maximum ${questionTypes[type].label} questions reached`;
+                } else {
+                    button.classList.remove('disabled');
+                    button.title = '';
+                }
             }
         });
+    }
+    
+    // Update empty message visibility
+    function updateEmptyMessage() {
+        const totalQuestions = Object.values(questionCount).reduce((sum, count) => sum + count, 0);
+        const emptyMessage = document.querySelector('#no-questions-message');
+        
+        if (emptyMessage) {
+            emptyMessage.style.display = totalQuestions === 0 ? 'block' : 'none';
+        }
     }
     
     // Initialize question preview
@@ -231,6 +308,12 @@ const QuestionManager = (function() {
         if (!previewContainer) return;
         
         const questions = document.querySelectorAll('.question-item');
+        
+        if (questions.length === 0) {
+            previewContainer.innerHTML = '<p class="text-muted text-center">Add questions to see how your form will look</p>';
+            return;
+        }
+        
         previewContainer.innerHTML = '';
         
         questions.forEach(question => {
@@ -252,45 +335,36 @@ const QuestionManager = (function() {
         let inputHtml = '';
         switch(type) {
             case 'string':
-                inputHtml = '<input type="text" class="form-control" disabled />';
+                inputHtml = '<input type="text" class="form-control" placeholder="Your answer..." disabled />';
                 break;
             case 'text':
-                inputHtml = '<textarea class="form-control" rows="3" disabled></textarea>';
+                inputHtml = '<textarea class="form-control" rows="3" placeholder="Your answer..." disabled></textarea>';
                 break;
             case 'integer':
-                inputHtml = '<input type="number" class="form-control" disabled />';
+                inputHtml = '<input type="number" class="form-control" placeholder="0" disabled />';
                 break;
             case 'checkbox':
-                inputHtml = '<input type="checkbox" class="form-check-input" disabled />';
+                inputHtml = '<div class="form-check"><input type="checkbox" class="form-check-input" disabled /><label class="form-check-label">Check to confirm</label></div>';
                 break;
         }
         
         div.innerHTML = `
-            <label class="form-label">
+            <label class="form-label fw-bold">
                 ${questionText}
-                ${showInTable ? '<span class="badge bg-info ms-1">Table</span>' : ''}
+                ${showInTable ? '<span class="badge bg-info ms-1">Shows in table</span>' : ''}
             </label>
-            ${description ? `<p class="text-muted small">${description}</p>` : ''}
+            ${description ? `<p class="text-muted small mb-2">${description}</p>` : ''}
             ${inputHtml}
         `;
         
         return div;
     }
     
-    // Capitalize first letter
-    function capitalizeFirst(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-    
     // Public API
     return {
         init: init,
         addQuestion: addQuestion,
-        getQuestionCount: () => questionCount
+        getQuestionCount: () => questionCount,
+        updatePreview: updatePreview
     };
 })();
-
-// Initialize when DOM is ready
-if (document.querySelector('#questions-container')) {
-    document.addEventListener('DOMContentLoaded', QuestionManager.init);
-}

@@ -9,6 +9,7 @@ using FormBuilder.Web.ViewModels.Template;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace FormBuilder.Web.Controllers
 {
@@ -81,8 +82,24 @@ namespace FormBuilder.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateTemplateViewModel model)
         {
+            if (string.IsNullOrWhiteSpace(model.Tags)) model.Tags = null;
+            
+            // AllowedUserIds null check
+            if (model.AllowedUserIds == null) model.AllowedUserIds = new List<int>();
+            
+            _logger.LogInformation($"=== CREATE POST - ModelState.IsValid: {ModelState.IsValid} ===");
+            
             if (!ModelState.IsValid)
             {
+                foreach (var key in ModelState.Keys)
+                {
+                    var state = ModelState[key];
+                    foreach (var error in state.Errors)
+                    {
+                        _logger.LogError($"Field: {key}, Error: {error.ErrorMessage}");
+                    }
+                }
+                
                 ViewBag.Topics = await _templateService.GetTopicsAsync();
                 return View(model);
             }
@@ -93,26 +110,23 @@ namespace FormBuilder.Web.Controllers
                 template.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 template.CreatedAt = DateTime.UtcNow;
                 template.UpdatedAt = DateTime.UtcNow;
-
-                // Handle image upload
-                if (model.ImageFile != null)
-                {
-                    var uploadResult = await _cloudinaryService.UploadImageAsync(
-                        model.ImageFile.OpenReadStream(), 
-                        model.ImageFile.FileName);
-                    template.ImageUrl = uploadResult;
-                }
+                
+                template.ImageUrl = "";
+                
+                SetEmptyStringsForNullQuestions(template);
 
                 await _templateService.CreateTemplateAsync(
-                    template, model.Tags, model.AllowedUserIds);
+                    template, 
+                    model.Tags ?? "", 
+                    model.AllowedUserIds ?? new List<int>());
 
                 TempData["Success"] = "Template created successfully!";
-                return RedirectToAction(nameof(Details), new { id = template.Id });
+                return RedirectToAction(nameof(MyTemplates));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating template");
-                ModelState.AddModelError("", "An error occurred while creating the template.");
+                ModelState.AddModelError("", $"An error occurred: {ex.Message}");
                 ViewBag.Topics = await _templateService.GetTopicsAsync();
                 return View(model);
             }
@@ -267,8 +281,52 @@ namespace FormBuilder.Web.Controllers
                 SortBy = sort,
                 SortOrder = order
             };
-
+            ViewBag.Topics = await _templateService.GetTopicsAsync();
             return View(model);
+        }
+
+        // Private helper method
+        private void SetEmptyStringsForNullQuestions(Template template)
+        {
+            // String Questions
+            template.CustomString1Question ??= "";
+            template.CustomString1Description ??= "";
+            template.CustomString2Question ??= "";
+            template.CustomString2Description ??= "";
+            template.CustomString3Question ??= "";
+            template.CustomString3Description ??= "";
+            template.CustomString4Question ??= "";
+            template.CustomString4Description ??= "";
+            
+            // Text Questions
+            template.CustomText1Question ??= "";
+            template.CustomText1Description ??= "";
+            template.CustomText2Question ??= "";
+            template.CustomText2Description ??= "";
+            template.CustomText3Question ??= "";
+            template.CustomText3Description ??= "";
+            template.CustomText4Question ??= "";
+            template.CustomText4Description ??= "";
+            
+            // Integer Questions
+            template.CustomInt1Question ??= "";
+            template.CustomInt1Description ??= "";
+            template.CustomInt2Question ??= "";
+            template.CustomInt2Description ??= "";
+            template.CustomInt3Question ??= "";
+            template.CustomInt3Description ??= "";
+            template.CustomInt4Question ??= "";
+            template.CustomInt4Description ??= "";
+            
+            // Checkbox Questions
+            template.CustomCheckbox1Question ??= "";
+            template.CustomCheckbox1Description ??= "";
+            template.CustomCheckbox2Question ??= "";
+            template.CustomCheckbox2Description ??= "";
+            template.CustomCheckbox3Question ??= "";
+            template.CustomCheckbox3Description ??= "";
+            template.CustomCheckbox4Question ??= "";
+            template.CustomCheckbox4Description ??= "";
         }
     }
 }
