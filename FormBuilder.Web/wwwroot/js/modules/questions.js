@@ -175,17 +175,27 @@ const QuestionManager = (function() {
                     
                     <div class="form-check form-switch">
                         <input type="checkbox" 
-                               class="form-check-input show-in-table-checkbox" 
-                               id="${prefix}ShowInTable" 
-                               name="${prefix}ShowInTable" 
-                               value="true" />
+                            class="form-check-input show-in-table-checkbox" 
+                            id="${prefix}ShowInTable" 
+                            name="${prefix}ShowInTable" 
+                            value="true" />
                         <label class="form-check-label" for="${prefix}ShowInTable">
                             <i class="fas fa-table text-muted"></i> 
                             Display this answer in the forms list table
                         </label>
                     </div>
-                </div>
-            </div>
+
+                    <div class="form-check form-switch mt-2">
+                        <input type="checkbox" 
+                            class="form-check-input required-field-checkbox" 
+                            id="${prefix}Required" 
+                            name="${prefix}Required" 
+                            value="true" />
+                        <label class="form-check-label" for="${prefix}Required">
+                            <i class="fas fa-asterisk text-danger"></i> 
+                            Required field
+                        </label>
+                    </div>
         `;
     }
     
@@ -281,6 +291,7 @@ const QuestionManager = (function() {
         const questionText = questionElement.querySelector('.question-text')?.value || 'Untitled Question';
         const description = questionElement.querySelector('.question-description')?.value || '';
         const showInTable = questionElement.querySelector('.show-in-table-checkbox')?.checked;
+        const isRequired = questionElement.querySelector('.required-field-checkbox')?.checked;
         
         const div = document.createElement('div');
         div.className = 'preview-question mb-4 p-3 border rounded bg-light';
@@ -316,6 +327,7 @@ const QuestionManager = (function() {
                     ${description ? `<p class="text-muted small mb-2">${description}</p>` : ''}
                 </div>
                 ${showInTable ? '<span class="badge bg-info" title="Shown in forms table"><i class="fas fa-table"></i></span>' : ''}
+                ${isRequired ? '<span class="badge bg-danger ms-1" title="Required field"><i class="fas fa-asterisk"></i></span>' : ''}
             </div>
             ${inputHtml}
         `;
