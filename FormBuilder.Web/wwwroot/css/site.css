@@ -349,3 +349,94 @@ main {
     background-color: #2a2a2a;
     border-color: #444;
 }
+
+/* Question Manager Styles */
+.question-item {
+    transition: all 0.3s ease;
+    border-width: 2px !important;
+}
+
+.question-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.question-handle {
+    cursor: move;
+    user-select: none;
+}
+
+/* SortableJS Ghost Styles */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #f0f0f0;
+}
+
+.sortable-chosen {
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.sortable-drag {
+    opacity: 0;
+}
+
+/* Preview Styles */
+.preview-question {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.preview-question:hover {
+    background-color: #e9ecef;
+}
+
+/* Question Type Button Styles */
+.question-type-btn {
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+.question-type-btn:not(:disabled):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.question-type-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Show in Table Badge */
+.show-in-table-checkbox:checked ~ label {
+    font-weight: 500;
+    color: #0d6efd;
+}
+
+/* Empty State */
+#no-questions-message {
+    padding: 3rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+/* Form Switch Enhancement */
+.form-switch .form-check-input {
+    width: 3em;
+    height: 1.5em;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+/* Remove Button Enhancement */
+.remove-question {
+    opacity: 0.7;
+    transition: all 0.2s;
+}
+
+.remove-question:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
