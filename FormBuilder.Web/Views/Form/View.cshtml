@@ -1,0 +1,93 @@
+@model FormBuilder.Web.ViewModels.Form.ViewFormViewModel
+@{
+    ViewData["Title"] = "View Form Response";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2>@Model.Template.Title</h2>
+                    <p class="text-muted mb-0">
+                        <strong>Submitted by:</strong> @Model.Form.User.UserName<br>
+                        <strong>Date:</strong> @Model.Form.FilledAt.ToString("dd MMM yyyy HH:mm")
+                    </p>
+                </div>
+            </div>
+
+            <!-- Answers -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Responses</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var answer in Model.Answers)
+                    {
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">@answer.Question</label>
+                            <div class="ps-3">
+                                @switch (answer.Type)
+                                {
+                                    case "text":
+                                        <div class="border rounded p-2 bg-light">
+                                            @if (string.IsNullOrWhiteSpace(answer.Answer))
+                                            {
+                                                <em class="text-muted">No answer provided</em>
+                                            }
+                                            else
+                                            {
+                                                <pre class="mb-0" style="white-space: pre-wrap;">@answer.Answer</pre>
+                                            }
+                                        </div>
+                                        break;
+                                    
+                                    case "checkbox":
+                                        <div>
+                                            @if (answer.Answer?.ToLower() == "true")
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Checked
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-times"></i> Not checked
+                                                </span>
+                                            }
+                                        </div>
+                                        break;
+                                    
+                                    default:
+                                        <div>
+                                            @if (string.IsNullOrWhiteSpace(answer.Answer))
+                                            {
+                                                <em class="text-muted">No answer provided</em>
+                                            }
+                                            else
+                                            {
+                                                <strong>@answer.Answer</strong>
+                                            }
+                                        </div>
+                                        break;
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer">
+                    <a asp-action="MyForms" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to My Forms
+                    </a>
+                    <a asp-controller="Template" asp-action="Details" 
+                       asp-route-id="@Model.Template.Id" 
+                       class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i> View Template
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

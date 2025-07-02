@@ -13,7 +13,6 @@ using System.Collections.Generic;
 
 namespace FormBuilder.Web.Controllers
 {
-    [Authorize]
     public class TemplateController : Controller
     {
         private readonly ITemplateService _templateService;
@@ -34,6 +33,7 @@ namespace FormBuilder.Web.Controllers
         }
 
         // GET: /Template
+        [AllowAnonymous]
         public async Task<IActionResult> Index(
             int page = 1, 
             string sort = "CreatedAt", 
@@ -42,14 +42,17 @@ namespace FormBuilder.Web.Controllers
             int? topic = null)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAuthenticated = User.Identity.IsAuthenticated;
+            
             var (templates, totalCount) = await _templateService.GetTemplatesAsync(
-                userId, page, 10, sort, order, search, topic);
+                null,
+                page, 10, sort, order, search, topic);
 
             var viewModels = templates.Select(t => {
                 var vm = _mapper.Map<TemplateViewModel>(t);
-                vm.CanEdit = t.UserId == userId || User.IsInRole("Admin");
+                vm.CanEdit = isAuthenticated && (t.UserId == userId || User.IsInRole("Admin"));
                 vm.CanDelete = vm.CanEdit;
-                vm.IsLikedByCurrentUser = t.Likes.Any(l => l.UserId == userId);
+                vm.IsLikedByCurrentUser = isAuthenticated && t.Likes.Any(l => l.UserId == userId);
                 return vm;
             }).ToList();
 
@@ -67,10 +70,12 @@ namespace FormBuilder.Web.Controllers
             };
 
             ViewBag.Topics = await _templateService.GetTopicsAsync();
+            ViewBag.IsAuthenticated = isAuthenticated;
             return View(model);
         }
 
         // GET: /Template/Create
+        [Authorize]
         public async Task<IActionResult> Create()
         {
             ViewBag.Topics = await _templateService.GetTopicsAsync();
@@ -79,6 +84,7 @@ namespace FormBuilder.Web.Controllers
 
         // POST: /Template/Create
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateTemplateViewModel model)
         {
@@ -153,6 +159,7 @@ namespace FormBuilder.Web.Controllers
         }
 
         // GET: /Template/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -172,6 +179,7 @@ namespace FormBuilder.Web.Controllers
 
         // POST: /Template/Edit/5
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditTemplateViewModel model)
         {
@@ -247,6 +255,7 @@ namespace FormBuilder.Web.Controllers
             if (!template.IsPublic && !await _templateService.CanUserAccessTemplateAsync(id, userId))
                 return Forbid();
 
+            // Include Forms with User data for mapping
             var model = _mapper.Map<TemplateViewModel>(template);
             model.CanEdit = await _templateService.CanUserEditTemplateAsync(id, userId, User.IsInRole("Admin"));
             model.CanDelete = model.CanEdit;
@@ -257,6 +266,7 @@ namespace FormBuilder.Web.Controllers
 
         // POST: /Template/Delete/5
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -275,6 +285,7 @@ namespace FormBuilder.Web.Controllers
         }
 
         // GET: /Template/MyTemplates
+        [Authorize]
         public async Task<IActionResult> MyTemplates(
             int page = 1, 
             string sort = "CreatedAt", 

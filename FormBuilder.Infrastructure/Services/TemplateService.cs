@@ -31,10 +31,15 @@ namespace FormBuilder.Infrastructure.Services
         {
             var query = _unitOfWork.Templates.GetQueryable();
 
-            // Filter by user if specified
             if (!string.IsNullOrEmpty(userId))
             {
+                // MyTemplates
                 query = query.Where(t => t.UserId == userId);
+            }
+            else
+            {
+                // Templates (Index) 
+                query = query.Where(t => t.IsPublic);
             }
 
             // Filter by topic
@@ -62,6 +67,7 @@ namespace FormBuilder.Infrastructure.Services
                 .Include(t => t.User)
                 .Include(t => t.Topic)
                 .Include(t => t.Forms)
+                    .ThenInclude(f => f.User)
                 .Include(t => t.Likes)
                 .Include(t => t.TemplateTags)
                     .ThenInclude(tt => tt.Tag);
@@ -81,6 +87,7 @@ namespace FormBuilder.Infrastructure.Services
                 .Include(t => t.User)
                 .Include(t => t.Topic)
                 .Include(t => t.Forms)
+                    .ThenInclude(f => f.User)
                 .Include(t => t.Likes)
                 .Include(t => t.Comments)
                     .ThenInclude(c => c.User)

@@ -1,0 +1,219 @@
+@model FormBuilder.Web.ViewModels.Form.FillFormViewModel
+@{
+    ViewData["Title"] = $"Fill Form - {Model.TemplateTitle}";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2>@Model.TemplateTitle</h2>
+                    @if (!string.IsNullOrEmpty(Model.TemplateDescription))
+                    {
+                        <p class="text-muted">@Html.Raw(Model.TemplateDescription)</p>
+                    }
+                    
+                    @if (Model.IsAnonymous)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle"></i>
+                            You must <a asp-controller="Account" asp-action="Login" 
+                                       asp-route-returnUrl="@Context.Request.Path">login</a> 
+                            to submit this form.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form asp-action="Submit" method="post" id="formSubmit" class="needs-validation" novalidate>
+                <input type="hidden" asp-for="TemplateId" value="@Model.TemplateId" />
+                
+                <div class="card">
+                    <div class="card-body">
+                        @if (Model.Questions.Any())
+                        {
+                            <!-- Progress Indicator -->
+                            <div class="progress mb-4" style="height: 25px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: 0%;" id="formProgress">
+                                    <span class="progress-text">0 / @Model.Questions.Count</span>
+                                </div>
+                            </div>
+
+                            <!-- Questions -->
+                            @foreach (var question in Model.Questions)
+                            {
+                                <div class="question-item mb-4 p-3 border rounded" 
+                                     data-question-required="@question.IsRequired.ToString().ToLower()">
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold">
+                                            @question.Question
+                                            @if (question.IsRequired)
+                                            {
+                                                <span class="text-danger">*</span>
+                                            }
+                                        </label>
+                                        @if (!string.IsNullOrEmpty(question.Description))
+                                        {
+                                            <p class="text-muted small mb-2">@question.Description</p>
+                                        }
+                                    </div>
+
+                                    @switch (question.Type)
+                                    {
+                                        case "string":
+                                            <input type="text" 
+                                                   class="form-control question-input" 
+                                                   name="@question.FieldName"
+                                                   @(question.IsRequired ? "required" : "")
+                                                   @(Model.IsAnonymous ? "readonly" : "") />
+                                            break;
+
+                                        case "text":
+                                            <textarea class="form-control question-input" 
+                                                      rows="4" 
+                                                      name="@question.FieldName"
+                                                      @(question.IsRequired ? "required" : "")
+                                                      @(Model.IsAnonymous ? "readonly" : "")></textarea>
+                                            break;
+
+                                        case "integer":
+                                            <input type="number" 
+                                                   class="form-control question-input" 
+                                                   name="@question.FieldName"
+                                                   @(question.IsRequired ? "required" : "")
+                                                   @(Model.IsAnonymous ? "readonly" : "") />
+                                            break;
+
+                                        case "checkbox":
+                                            <div class="form-check">
+                                                <input type="checkbox" 
+                                                       class="form-check-input question-input" 
+                                                       id="@question.FieldName"
+                                                       name="@question.FieldName" 
+                                                       value="true"
+                                                       @(Model.IsAnonymous ? "disabled" : "") />
+                                                <input type="hidden" 
+                                                       name="@question.FieldName" 
+                                                       value="false" />
+                                                <label class="form-check-label" for="@question.FieldName">
+                                                    Check to confirm
+                                                </label>
+                                            </div>
+                                            break;
+                                    }
+                                    
+                                    <div class="invalid-feedback">
+                                        This field is required.
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Optional Email Copy -->
+                            @if (!Model.IsAnonymous)
+                            {
+                                <div class="form-check mb-4">
+                                    <input type="checkbox" class="form-check-input" 
+                                           id="SendEmailCopy" name="SendEmailCopy" value="true">
+                                    <input type="hidden" name="SendEmailCopy" value="false">
+                                    <label class="form-check-label" for="SendEmailCopy">
+                                        <i class="fas fa-envelope"></i> 
+                                        Email me a copy of my responses
+                                    </label>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                This template has no questions.
+                            </div>
+                        }
+                        
+                        @if (!User.Identity.IsAuthenticated && Model.Questions.Any())
+                        {
+                            <div class="text-center py-4">
+                                <a asp-controller="Account" asp-action="Login" 
+                                   asp-route-returnUrl="@Context.Request.Path" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt"></i> Login to Fill Form
+                                </a>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="card-footer">
+                        @if (!Model.IsAnonymous && Model.Questions.Any())
+                        {
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Form
+                            </button>
+                        }
+                        <a asp-controller="Template" asp-action="Details" 
+                           asp-route-id="@Model.TemplateId" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Template
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Progress tracking
+            const questionInputs = document.querySelectorAll('.question-input');
+            const progressBar = document.getElementById('formProgress');
+            const progressText = progressBar?.querySelector('.progress-text');
+            
+            function updateProgress() {
+                let filledCount = 0;
+                questionInputs.forEach(input => {
+                    if (input.type === 'checkbox') {
+                        if (input.checked) filledCount++;
+                    } else if (input.value.trim()) {
+                        filledCount++;
+                    }
+                });
+                
+                const percentage = (filledCount / questionInputs.length) * 100;
+                if (progressBar) {
+                    progressBar.style.width = percentage + '%';
+                    progressText.textContent = `${filledCount} / ${questionInputs.length}`;
+                }
+            }
+            
+            // Add listeners
+            questionInputs.forEach(input => {
+                input.addEventListener('input', updateProgress);
+                input.addEventListener('change', updateProgress);
+            });
+            
+            // Initial update
+            updateProgress();
+            
+            // Form validation
+            if (typeof FormValidation !== 'undefined') {
+                FormValidation.init();
+            }
+            
+            // Custom validation for required fields
+            const form = document.getElementById('formSubmit');
+            form?.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+}

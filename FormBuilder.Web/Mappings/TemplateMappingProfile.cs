@@ -12,21 +12,30 @@ namespace FormBuilder.Web.Mappings
         {
             // Template to TemplateViewModel
             CreateMap<Template, TemplateViewModel>()
-                .ForMember(dest => dest.TopicName, 
+                .ForMember(dest => dest.TopicName,
                     opt => opt.MapFrom(src => src.Topic.Name))
-                .ForMember(dest => dest.AuthorName, 
+                .ForMember(dest => dest.AuthorName,
                     opt => opt.MapFrom(src => src.User.UserName))
-                .ForMember(dest => dest.AuthorId, 
+                .ForMember(dest => dest.AuthorId,
                     opt => opt.MapFrom(src => src.UserId))
-                .ForMember(dest => dest.FormCount, 
+                .ForMember(dest => dest.FormCount,
                     opt => opt.MapFrom(src => src.Forms.Count))
-                .ForMember(dest => dest.LikeCount, 
+                .ForMember(dest => dest.LikeCount,
                     opt => opt.MapFrom(src => src.Likes.Count))
-                .ForMember(dest => dest.Tags, 
+                .ForMember(dest => dest.Tags,
                     opt => opt.MapFrom(src => src.TemplateTags
                         .Select(tt => tt.Tag.Name).ToList()))
                 .ForMember(dest => dest.Questions,
-                    opt => opt.MapFrom(src => GetQuestionsFromTemplate(src)));
+                    opt => opt.MapFrom(src => GetQuestionsFromTemplate(src)))
+                .ForMember(dest => dest.Forms,
+                    opt => opt.MapFrom(src => src.Forms.Select(f => new ViewModels.Template.FormViewModel
+                    {
+                        Id = f.Id,
+                        UserId = f.UserId,
+                        UserName = f.User != null ? f.User.UserName : "Unknown",
+                        FilledAt = f.FilledAt
+                    }).ToList()));
+                    
 
             // CreateTemplateViewModel to Template
             CreateMap<CreateTemplateViewModel, Template>()
