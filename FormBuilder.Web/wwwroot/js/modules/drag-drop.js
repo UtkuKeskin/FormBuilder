@@ -1,120 +1,44 @@
-// Drag & Drop Module
+// Drag & Drop Module - Enhanced with SortableJS
 const DragDrop = (function() {
     'use strict';
     
-    let draggedElement = null;
+    let sortableInstance = null;
     
     // Initialize drag and drop
     function init() {
-        // Initialize sortable lists
-        initSortableLists();
+        // Initialize question sorting
+        initQuestionSorting();
         
         // Initialize file upload areas
         initFileUploadAreas();
     }
     
-    // Initialize sortable lists
-    function initSortableLists() {
-        const sortableLists = document.querySelectorAll('[data-sortable="true"]');
+    // Initialize question sorting with SortableJS
+    function initQuestionSorting() {
+        const container = document.getElementById('questions-container');
+        if (!container) return;
         
-        sortableLists.forEach(list => {
-            makeSortable(list);
-        });
-    }
-    
-    // Make list sortable
-    function makeSortable(list) {
-        const items = list.querySelectorAll('[data-sortable-item]');
+        // Check if SortableJS is loaded
+        if (typeof Sortable === 'undefined') {
+            console.error('SortableJS not loaded');
+            return;
+        }
         
-        items.forEach(item => {
-            item.draggable = true;
+        sortableInstance = new Sortable(container, {
+            animation: 150,
+            handle: '.question-handle',
+            draggable: '.question-item',
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
             
-            item.addEventListener('dragstart', handleDragStart);
-            item.addEventListener('dragend', handleDragEnd);
-            item.addEventListener('dragover', handleDragOver);
-            item.addEventListener('drop', handleDrop);
-            item.addEventListener('dragenter', handleDragEnter);
-            item.addEventListener('dragleave', handleDragLeave);
-        });
-    }
-    
-    // Handle drag start
-    function handleDragStart(e) {
-        draggedElement = this;
-        this.classList.add('dragging');
-        
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', this.innerHTML);
-    }
-    
-    // Handle drag end
-    function handleDragEnd(e) {
-        this.classList.remove('dragging');
-        
-        const items = document.querySelectorAll('[data-sortable-item]');
-        items.forEach(item => {
-            item.classList.remove('drag-over');
-        });
-        
-        // Trigger order changed event
-        const list = this.closest('[data-sortable="true"]');
-        if (list) {
-            const event = new CustomEvent('sortorderchanged', {
-                detail: { items: getOrderedItems(list) }
-            });
-            list.dispatchEvent(event);
-        }
-    }
-    
-    // Handle drag over
-    function handleDragOver(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        
-        e.dataTransfer.dropEffect = 'move';
-        return false;
-    }
-    
-    // Handle drop
-    function handleDrop(e) {
-        if (e.stopPropagation) {
-            e.stopPropagation();
-        }
-        
-        if (draggedElement !== this) {
-            const list = this.parentNode;
-            const allItems = Array.from(list.children);
-            const draggedIndex = allItems.indexOf(draggedElement);
-            const targetIndex = allItems.indexOf(this);
-            
-            if (draggedIndex < targetIndex) {
-                this.parentNode.insertBefore(draggedElement, this.nextSibling);
-            } else {
-                this.parentNode.insertBefore(draggedElement, this);
+            onEnd: function(evt) {
+                // Notify QuestionManager about order change
+                if (typeof QuestionManager !== 'undefined') {
+                    QuestionManager.handleOrderChange();
+                }
             }
-        }
-        
-        return false;
-    }
-    
-    // Handle drag enter
-    function handleDragEnter(e) {
-        this.classList.add('drag-over');
-    }
-    
-    // Handle drag leave
-    function handleDragLeave(e) {
-        this.classList.remove('drag-over');
-    }
-    
-    // Get ordered items
-    function getOrderedItems(list) {
-        const items = list.querySelectorAll('[data-sortable-item]');
-        return Array.from(items).map((item, index) => ({
-            id: item.dataset.id || item.id,
-            order: index
-        }));
+        });
     }
     
     // Initialize file upload areas
@@ -147,9 +71,6 @@ const DragDrop = (function() {
         
         // Handle dropped files
         area.addEventListener('drop', e => handleFileDrop(e, input), false);
-        
-        // Click to upload
-        area.addEventListener('click', () => input.click());
     }
     
     // Prevent default drag behaviors
@@ -182,16 +103,21 @@ const DragDrop = (function() {
         }
     }
     
-    // Make element sortable (public method)
-    function makeElementSortable(element) {
-        element.setAttribute('data-sortable', 'true');
-        makeSortable(element);
+    // Destroy sortable instance
+    function destroy() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+            sortableInstance = null;
+        }
     }
     
     // Public API
     return {
         init: init,
-        makeSortable: makeElementSortable,
-        getOrderedItems: getOrderedItems
+        destroy: destroy,
+        reinitialize: function() {
+            destroy();
+            init();
+        }
     };
 })();

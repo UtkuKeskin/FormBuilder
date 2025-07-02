@@ -15,6 +15,12 @@
     <link rel="stylesheet" href="~/css/themes/light.css" id="theme-style" />
 </head>
 <body>
+
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+        <div id="toastContainer"></div>
+    </div>
+    
     <!-- Anti-forgery token for AJAX -->
     @if (User.Identity?.IsAuthenticated ?? false)
     {
