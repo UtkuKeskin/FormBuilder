@@ -20,7 +20,7 @@
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
         <div id="toastContainer"></div>
     </div>
-    
+
     <!-- Anti-forgery token for AJAX -->
     @if (User.Identity?.IsAuthenticated ?? false)
     {
@@ -95,34 +95,21 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer mt-auto py-3 bg-light">
-        <div class="container">
-            <div class="row">
+   <!-- Footer -->
+    <footer class="footer mt-auto py-2 bg-light">
+        <div class="container-fluid">
+            <div class="row align-items-center py-2">
                 <div class="col-md-4">
-                    <h5>About FormBuilder</h5>
-                    <p class="text-muted">Create custom forms, surveys, and questionnaires with ease.</p>
+                    <h6 class="mb-0 small">About FormBuilder</h6>
+                    <p class="mb-0"><small class="text-muted">Create custom forms, surveys, and questionnaires with ease.</small></p>
                 </div>
-                <div class="col-md-4">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted">Help Center</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy" class="text-muted">Privacy Policy</a></li>
-                        <li><a href="#" class="text-muted">Terms of Service</a></li>
-                    </ul>
+                <div class="col-md-4 text-center">
+                    <p class="mb-0 fw-bold">Tayyar Utku KESKİN</p>
                 </div>
-                <div class="col-md-4">
-                    <h5>Contact Us</h5>
-                    <p class="text-muted">
-                        <i class="fas fa-envelope"></i> support@formbuilder.com<br>
-                        <i class="fas fa-phone"></i> +1 234 567 8900
-                    </p>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0"><small class="text-muted">&copy; 2024 FormBuilder. All rights reserved.</small></p>
                 </div>
             </div>
-            <hr>
-            <p class="text-center text-muted mb-0">
-                &copy; 2024 FormBuilder. All rights reserved.
-            </p>
         </div>
     </footer>
 
