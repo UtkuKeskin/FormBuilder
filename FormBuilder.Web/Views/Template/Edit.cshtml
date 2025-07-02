@@ -114,7 +114,7 @@
                                     <!-- Render existing questions -->
                                     @{
                                         // Helper to render question
-                                        void RenderQuestion(string type, int number, string question, string description, bool showInTable, bool state)
+                                        void RenderQuestion(string type, int number, string question, string description, bool showInTable, bool isRequired, bool state)
                                         {
                                             if (!state) return;
                                             
@@ -164,6 +164,16 @@
                                                             Show in forms table
                                                         </label>
                                                     </div>
+                                                    
+                                                    <div class="form-check mt-2">
+                                                        <input type="checkbox" class="form-check-input required-field-checkbox" 
+                                                               id="@(prefix)Required" 
+                                                               name="@(prefix)Required" value="true" 
+                                                               @(isRequired ? "checked" : "") />
+                                                        <label class="form-check-label" for="@(prefix)Required">
+                                                            <i class="fas fa-asterisk text-danger"></i> Required field
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         }
@@ -175,6 +185,7 @@
                                                 Model.GetType().GetProperty($"CustomString{i}Question")?.GetValue(Model)?.ToString() ?? "",
                                                 Model.GetType().GetProperty($"CustomString{i}Description")?.GetValue(Model)?.ToString() ?? "",
                                                 (bool)(Model.GetType().GetProperty($"CustomString{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomString{i}Required")?.GetValue(Model) ?? false),
                                                 (bool)(Model.GetType().GetProperty($"CustomString{i}State")?.GetValue(Model) ?? false));
                                         }
                                         
@@ -184,6 +195,7 @@
                                                 Model.GetType().GetProperty($"CustomText{i}Question")?.GetValue(Model)?.ToString() ?? "",
                                                 Model.GetType().GetProperty($"CustomText{i}Description")?.GetValue(Model)?.ToString() ?? "",
                                                 (bool)(Model.GetType().GetProperty($"CustomText{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomText{i}Required")?.GetValue(Model) ?? false),
                                                 (bool)(Model.GetType().GetProperty($"CustomText{i}State")?.GetValue(Model) ?? false));
                                         }
                                         
@@ -193,6 +205,7 @@
                                                 Model.GetType().GetProperty($"CustomInt{i}Question")?.GetValue(Model)?.ToString() ?? "",
                                                 Model.GetType().GetProperty($"CustomInt{i}Description")?.GetValue(Model)?.ToString() ?? "",
                                                 (bool)(Model.GetType().GetProperty($"CustomInt{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomInt{i}Required")?.GetValue(Model) ?? false),
                                                 (bool)(Model.GetType().GetProperty($"CustomInt{i}State")?.GetValue(Model) ?? false));
                                         }
                                         
@@ -202,6 +215,7 @@
                                                 Model.GetType().GetProperty($"CustomCheckbox{i}Question")?.GetValue(Model)?.ToString() ?? "",
                                                 Model.GetType().GetProperty($"CustomCheckbox{i}Description")?.GetValue(Model)?.ToString() ?? "",
                                                 (bool)(Model.GetType().GetProperty($"CustomCheckbox{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomCheckbox{i}Required")?.GetValue(Model) ?? false),
                                                 (bool)(Model.GetType().GetProperty($"CustomCheckbox{i}State")?.GetValue(Model) ?? false));
                                         }
                                     }
