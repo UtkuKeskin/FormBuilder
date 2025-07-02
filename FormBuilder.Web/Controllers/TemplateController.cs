@@ -111,7 +111,27 @@ namespace FormBuilder.Web.Controllers
                 template.CreatedAt = DateTime.UtcNow;
                 template.UpdatedAt = DateTime.UtcNow;
                 
+                if (model.ImageFile != null)
+            {
+                try
+                {
+                    var uploadResult = await _cloudinaryService.UploadImageAsync(
+                        model.ImageFile.OpenReadStream(), 
+                        model.ImageFile.FileName);
+                    template.ImageUrl = uploadResult;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Image upload failed");
+                    ModelState.AddModelError("ImageFile", "Image upload failed");
+                    ViewBag.Topics = await _templateService.GetTopicsAsync();
+                    return View(model);
+                }
+            }
+            else
+            {
                 template.ImageUrl = "";
+            }
                 
                 SetEmptyStringsForNullQuestions(template);
 
@@ -289,44 +309,28 @@ namespace FormBuilder.Web.Controllers
         private void SetEmptyStringsForNullQuestions(Template template)
         {
             // String Questions
-            template.CustomString1Question ??= "";
-            template.CustomString1Description ??= "";
-            template.CustomString2Question ??= "";
-            template.CustomString2Description ??= "";
-            template.CustomString3Question ??= "";
-            template.CustomString3Description ??= "";
-            template.CustomString4Question ??= "";
-            template.CustomString4Description ??= "";
-            
+            SetEmptyStringsForQuestionType(template, "String", 4);
             // Text Questions
-            template.CustomText1Question ??= "";
-            template.CustomText1Description ??= "";
-            template.CustomText2Question ??= "";
-            template.CustomText2Description ??= "";
-            template.CustomText3Question ??= "";
-            template.CustomText3Description ??= "";
-            template.CustomText4Question ??= "";
-            template.CustomText4Description ??= "";
-            
+            SetEmptyStringsForQuestionType(template, "Text", 4);
             // Integer Questions
-            template.CustomInt1Question ??= "";
-            template.CustomInt1Description ??= "";
-            template.CustomInt2Question ??= "";
-            template.CustomInt2Description ??= "";
-            template.CustomInt3Question ??= "";
-            template.CustomInt3Description ??= "";
-            template.CustomInt4Question ??= "";
-            template.CustomInt4Description ??= "";
-            
+            SetEmptyStringsForQuestionType(template, "Int", 4);
             // Checkbox Questions
-            template.CustomCheckbox1Question ??= "";
-            template.CustomCheckbox1Description ??= "";
-            template.CustomCheckbox2Question ??= "";
-            template.CustomCheckbox2Description ??= "";
-            template.CustomCheckbox3Question ??= "";
-            template.CustomCheckbox3Description ??= "";
-            template.CustomCheckbox4Question ??= "";
-            template.CustomCheckbox4Description ??= "";
+            SetEmptyStringsForQuestionType(template, "Checkbox", 4);
+        }
+
+        private void SetEmptyStringsForQuestionType(Template template, string type, int count)
+        {
+            for (int i = 1; i <= count; i++)
+            {
+                var questionProp = template.GetType().GetProperty($"Custom{type}{i}Question");
+                var descProp = template.GetType().GetProperty($"Custom{type}{i}Description");
+                
+                if (questionProp?.GetValue(template) == null)
+                    questionProp?.SetValue(template, "");
+                
+                if (descProp?.GetValue(template) == null)
+                    descProp?.SetValue(template, "");
+            }
         }
     }
 }
