@@ -223,3 +223,129 @@ main {
 .invalid-feedback {
     display: block;
 }
+
+/* Template specific styles */
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.upload-area {
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s;
+    cursor: pointer;
+    background-color: #f8f9fa;
+}
+
+.upload-area:hover {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.upload-area.highlight {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+/* Table row hover */
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+}
+
+/* Remove border conflicts */
+.table {
+    border-collapse: collapse;
+}
+
+/* Clickable row styles */
+[data-clickable-rows="true"] tbody tr {
+    transition: background-color 0.2s;
+}
+
+[data-clickable-rows="true"] tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+[data-clickable-rows="true"] tbody tr td.no-click {
+    cursor: default;
+}
+
+/* Selected items info */
+.selected-info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.25rem;
+}
+
+/* Question editor styles */
+.question-item {
+    border: 1px solid #dee2e6;
+    transition: all 0.3s;
+}
+
+.question-item:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+}
+
+.question-handle {
+    cursor: move;
+}
+
+.question-item.dragging {
+    opacity: 0.5;
+}
+
+/* Preview styles */
+.preview-question {
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+    margin-bottom: 1rem;
+}
+
+/* No questions message */
+#no-questions-message {
+    color: #6c757d;
+}
+
+/* Tab active indicator */
+.nav-tabs .nav-link.active {
+    background-color: #fff;
+    border-bottom-color: #fff;
+}
+
+/* Dropdown menu in table */
+.table .dropdown-toggle::after {
+    display: none;
+}
+
+/* Pagination */
+.pagination {
+    margin-bottom: 0;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .upload-area {
+    background-color: #2a2a2a;
+    border-color: #444;
+}
+
+[data-theme="dark"] .upload-area:hover {
+    background-color: #333;
+    border-color: #0d6efd;
+}
+
+[data-theme="dark"] .selected-info {
+    background-color: #1a3a52;
+    border-color: #2d5a7b;
+    color: #a6c8ff;
+}
+
+[data-theme="dark"] .preview-question {
+    background-color: #2a2a2a;
+    border-color: #444;
+}

@@ -1,0 +1,328 @@
+@model FormBuilder.Web.ViewModels.Template.EditTemplateViewModel
+@{
+    ViewData["Title"] = "Edit Template";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h2 class="mb-4">@ViewData["Title"]</h2>
+            
+            <form asp-action="Edit" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                <input asp-for="Id" type="hidden" />
+                <input asp-for="Version" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                
+                <!-- Same tab structure as Create.cshtml, with edits specific to Edit -->
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs mb-4" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="general-tab" data-bs-toggle="tab" 
+                                data-bs-target="#general" type="button" role="tab">
+                            <i class="fas fa-info-circle"></i> General Settings
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="questions-tab" data-bs-toggle="tab" 
+                                data-bs-target="#questions" type="button" role="tab">
+                            <i class="fas fa-question-circle"></i> Questions
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="access-tab" data-bs-toggle="tab" 
+                                data-bs-target="#access" type="button" role="tab">
+                            <i class="fas fa-lock"></i> Access Control
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- General Tab -->
+                    <div class="tab-pane fade show active" id="general" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Title" class="form-label required">Title</label>
+                                        <input asp-for="Title" class="form-control" required>
+                                        <span asp-validation-for="Title" class="text-danger"></span>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="TopicId" class="form-label required">Topic</label>
+                                        <select asp-for="TopicId" class="form-select" required>
+                                            <option value="">Select topic...</option>
+                                            @foreach (var topic in ViewBag.Topics as List<FormBuilder.Core.Entities.Topic>)
+                                            {
+                                                <option value="@topic.Id">@topic.Name</option>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="TopicId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label asp-for="Description" class="form-label required">Description</label>
+                                    <textarea asp-for="Description" class="form-control" rows="4" required></textarea>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                    <small class="text-muted">Supports markdown formatting</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label asp-for="ImageFile" class="form-label">Template Image</label>
+                                    
+                                    @if (!string.IsNullOrEmpty(Model.CurrentImageUrl))
+                                    {
+                                        <div class="mb-2">
+                                            <img src="@Model.CurrentImageUrl" class="img-thumbnail" style="max-height: 200px;">
+                                            <p class="mt-1">
+                                                <small class="text-muted">Current image. Upload new to replace.</small>
+                                            </p>
+                                        </div>
+                                    }
+                                    
+                                    <div class="upload-area border rounded p-4 text-center" data-upload-area>
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
+                                        <p class="mb-2">Drag & drop an image here or click to browse</p>
+                                        <input asp-for="ImageFile" type="file" class="d-none" accept="image/*">
+                                        <small class="text-muted">Max size: 5MB. Formats: JPG, PNG, WEBP</small>
+                                    </div>
+                                    <div id="imagePreview" class="mt-2"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label asp-for="Tags" class="form-label">Tags</label>
+                                    <input asp-for="Tags" class="form-control" 
+                                           placeholder="Enter tags separated by commas">
+                                    <small class="text-muted">e.g., survey, feedback, quiz</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Questions Tab -->
+                    <div class="tab-pane fade" id="questions" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="mb-0">Template Questions</h5>
+                                    <div id="question-type-selector"></div>
+                                </div>
+                                
+                                <div id="questions-container">
+                                    <!-- Render existing questions -->
+                                    @{
+                                        // Helper to render question
+                                        void RenderQuestion(string type, int number, string question, string description, bool showInTable, bool state)
+                                        {
+                                            if (!state) return;
+                                            
+                                            var typeConfig = type switch {
+                                                "string" => ("Short Text", "fa-font"),
+                                                "text" => ("Long Text", "fa-align-left"),
+                                                "integer" => ("Number", "fa-hashtag"),
+                                                "checkbox" => ("Checkbox", "fa-check-square"),
+                                                _ => ("Unknown", "fa-question")
+                                            };
+                                            
+                                            var prefix = $"Custom{char.ToUpper(type[0]) + type.Substring(1)}{number}";
+                                            
+                                            <div class="question-item card mb-3" data-question-type="@type" data-question-number="@number">
+                                                <div class="card-header d-flex justify-content-between align-items-center">
+                                                    <span class="question-handle">
+                                                        <i class="fas fa-grip-vertical text-muted"></i>
+                                                        <i class="fas @typeConfig.Item2"></i> @typeConfig.Item1 @number
+                                                    </span>
+                                                    <button type="button" class="btn btn-sm btn-danger remove-question">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="card-body">
+                                                    <input type="hidden" name="@(prefix)State" value="true" />
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Question</label>
+                                                        <input type="text" class="form-control question-text" 
+                                                               name="@(prefix)Question" value="@question"
+                                                               placeholder="Enter your question" required />
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Description (optional)</label>
+                                                        <input type="text" class="form-control" 
+                                                               name="@(prefix)Description" value="@description"
+                                                               placeholder="Add helpful description" />
+                                                    </div>
+                                                    
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input" 
+                                                               id="@(prefix)ShowInTable" 
+                                                               name="@(prefix)ShowInTable" value="true" 
+                                                               @(showInTable ? "checked" : "") />
+                                                        <label class="form-check-label" for="@(prefix)ShowInTable">
+                                                            Show in forms table
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        
+                                        // Render all existing questions
+                                        for (int i = 1; i <= 4; i++)
+                                        {
+                                            RenderQuestion("string", i, 
+                                                Model.GetType().GetProperty($"CustomString{i}Question")?.GetValue(Model)?.ToString() ?? "",
+                                                Model.GetType().GetProperty($"CustomString{i}Description")?.GetValue(Model)?.ToString() ?? "",
+                                                (bool)(Model.GetType().GetProperty($"CustomString{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomString{i}State")?.GetValue(Model) ?? false));
+                                        }
+                                        
+                                        for (int i = 1; i <= 4; i++)
+                                        {
+                                            RenderQuestion("text", i, 
+                                                Model.GetType().GetProperty($"CustomText{i}Question")?.GetValue(Model)?.ToString() ?? "",
+                                                Model.GetType().GetProperty($"CustomText{i}Description")?.GetValue(Model)?.ToString() ?? "",
+                                                (bool)(Model.GetType().GetProperty($"CustomText{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomText{i}State")?.GetValue(Model) ?? false));
+                                        }
+                                        
+                                        for (int i = 1; i <= 4; i++)
+                                        {
+                                            RenderQuestion("integer", i, 
+                                                Model.GetType().GetProperty($"CustomInt{i}Question")?.GetValue(Model)?.ToString() ?? "",
+                                                Model.GetType().GetProperty($"CustomInt{i}Description")?.GetValue(Model)?.ToString() ?? "",
+                                                (bool)(Model.GetType().GetProperty($"CustomInt{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomInt{i}State")?.GetValue(Model) ?? false));
+                                        }
+                                        
+                                        for (int i = 1; i <= 4; i++)
+                                        {
+                                            RenderQuestion("checkbox", i, 
+                                                Model.GetType().GetProperty($"CustomCheckbox{i}Question")?.GetValue(Model)?.ToString() ?? "",
+                                                Model.GetType().GetProperty($"CustomCheckbox{i}Description")?.GetValue(Model)?.ToString() ?? "",
+                                                (bool)(Model.GetType().GetProperty($"CustomCheckbox{i}ShowInTable")?.GetValue(Model) ?? false),
+                                                (bool)(Model.GetType().GetProperty($"CustomCheckbox{i}State")?.GetValue(Model) ?? false));
+                                        }
+                                    }
+                                </div>
+                                
+                                <div class="alert alert-warning mt-3">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Note:</strong> Modifying questions will not affect already submitted forms.
+                                    Deleted questions will show as empty in existing forms.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Question Preview -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Form Preview</h6>
+                            </div>
+                            <div class="card-body" id="question-preview">
+                                <!-- Preview will be generated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Access Tab -->
+                    <div class="tab-pane fade" id="access" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input asp-for="IsPublic" class="form-check-input">
+                                    <label asp-for="IsPublic" class="form-check-label">
+                                        Public Template (any authenticated user can fill)
+                                    </label>
+                                </div>
+                                
+                                <div id="userAccessControl" class="@(Model.IsPublic ? "d-none" : "")">
+                                    <h6>Allowed Users</h6>
+                                    <p class="text-muted">Select specific users who can access this template</p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Search Users</label>
+                                        <input type="text" class="form-control" id="userSearch" 
+                                               placeholder="Type name or email..." 
+                                               data-autocomplete="users">
+                                    </div>
+                                    
+                                    <div id="selectedUsers" class="mb-3">
+                                        @* TODO: Render existing allowed users *@
+                                    </div>
+                                    
+                                    <input asp-for="AllowedUserIds" type="hidden" id="allowedUserIds">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/modules/questions.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Count existing questions before init
+            const existingQuestions = document.querySelectorAll('.question-item').length;
+            if (existingQuestions === 0) {
+                document.getElementById('no-questions-message')?.classList.remove('d-none');
+            }
+            
+            // Initialize modules
+            QuestionManager.init();
+            DragDrop.init();
+            
+            // Update preview immediately
+            if (typeof QuestionManager !== 'undefined' && QuestionManager.updatePreview) {
+                QuestionManager.updatePreview();
+            }
+            
+            // Access control toggle
+            const isPublicCheckbox = document.getElementById('IsPublic');
+            const userAccessControl = document.getElementById('userAccessControl');
+            
+            isPublicCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    userAccessControl.classList.add('d-none');
+                } else {
+                    userAccessControl.classList.remove('d-none');
+                }
+            });
+            
+            // Image upload preview
+            const imageInput = document.querySelector('input[type="file"]');
+            const uploadArea = document.querySelector('[data-upload-area]');
+            const imagePreview = document.getElementById('imagePreview');
+            
+            uploadArea.addEventListener('click', () => imageInput.click());
+            
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.innerHTML = `
+                            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px;">
+                            <p class="mt-1"><small class="text-muted">New image preview</small></p>
+                        `;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
+}

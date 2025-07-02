@@ -57,7 +57,7 @@ try
     builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
     // Add AutoMapper
-    builder.Services.AddAutoMapper(typeof(MappingProfile));
+    builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 
     // Add Identity

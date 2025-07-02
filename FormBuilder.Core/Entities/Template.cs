@@ -2,6 +2,16 @@ namespace FormBuilder.Core.Entities
 {
     public class Template : BaseEntity
     {
+
+        public Template()
+        {
+            Forms = new List<Form>();
+            Comments = new List<Comment>();
+            Likes = new List<Like>();
+            TemplateTags = new List<TemplateTag>();
+            TemplateAccesses = new List<TemplateAccess>();
+        }
+
         public string Title { get; set; }
         public string Description { get; set; }
         public string ImageUrl { get; set; }

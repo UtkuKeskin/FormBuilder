@@ -1,0 +1,136 @@
+@model FormBuilder.Web.ViewModels.Template.TemplateListViewModel
+@{
+    ViewData["Title"] = "My Templates";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header with Title and Create Button -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>@ViewData["Title"]</h2>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Template
+                </a>
+            </div>
+
+            <!-- Templates Table -->
+            <div class="card">
+                <div class="card-body p-0">
+                    @if (Model?.Templates != null && Model.Templates.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" data-clickable-rows="true">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;">
+                                            <input type="checkbox" class="form-check-input" data-select-all>
+                                        </th>
+                                        <th>Title</th>
+                                        <th>Topic</th>
+                                        <th>Forms</th>
+                                        <th>Likes</th>
+                                        <th>Created</th>
+                                        <th style="width: 50px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var template in Model.Templates)
+                                    {
+                                        <tr data-url="@Url.Action("Edit", new { id = template.Id })" 
+                                            data-id="@template.Id">
+                                            <td class="no-click">
+                                                <input type="checkbox" class="form-check-input" 
+                                                       data-select-item="@template.Id">
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong>@template.Title</strong>
+                                                    @if (!template.IsPublic)
+                                                    {
+                                                        <span class="badge bg-secondary ms-1">Private</span>
+                                                    }
+                                                </div>
+                                                <small class="text-muted">
+                                                    @if (!string.IsNullOrEmpty(template.Description))
+                                                    {
+                                                        @(template.Description.Length > 100 ? template.Description.Substring(0, 100) + "..." : template.Description)
+                                                    }
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@template.TopicName</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@template.FormCount</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">@template.LikeCount</span>
+                                            </td>
+                                            <td>
+                                                <small>@template.CreatedAt.ToString("dd MMM yyyy")</small>
+                                            </td>
+                                            <td class="no-click">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light" type="button" 
+                                                            data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item" 
+                                                               asp-action="Details" asp-route-id="@template.Id">
+                                                                <i class="fas fa-eye"></i> View
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" 
+                                                               asp-action="Edit" asp-route-id="@template.Id">
+                                                                <i class="fas fa-edit"></i> Edit
+                                                            </a>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <form asp-action="Delete" asp-route-id="@template.Id" 
+                                                                  method="post" class="d-inline"
+                                                                  onsubmit="return confirm('Delete this template?');">
+                                                                @Html.AntiForgeryToken()
+                                                                <button type="submit" class="dropdown-item text-danger">
+                                                                    <i class="fas fa-trash"></i> Delete
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">You haven't created any templates yet.</p>
+                            <a asp-action="Create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Your First Template
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof TableActions !== 'undefined') {
+                TableActions.init();
+            }
+        });
+    </script>
+}
