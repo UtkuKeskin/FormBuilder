@@ -266,7 +266,7 @@
                                         @* TODO: Render existing allowed users *@
                                     </div>
                                     
-                                    <input asp-for="AllowedUserIds" type="hidden" id="allowedUserIds">
+                                    <input type="hidden" name="AllowedUserIds" value="" />
                                 </div>
                             </div>
                         </div>
@@ -288,7 +288,7 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/lib/sortablejs/Sortable.min.js"></script>
-    <script src="~/js/modules/questions.js"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Count existing questions before init
@@ -296,48 +296,63 @@
             if (existingQuestions === 0) {
                 document.getElementById('no-questions-message')?.classList.remove('d-none');
             }
-            
-            // Initialize modules
-            QuestionManager.init();
-            DragDrop.init();
-            
-            // Update preview immediately
-            if (typeof QuestionManager !== 'undefined' && QuestionManager.updatePreview) {
-                QuestionManager.updatePreview();
+                     
+            // QuestionManager'ın yüklenip yüklenmediğini kontrol et
+            if (typeof QuestionManager !== 'undefined') {
+                // Initialize modules
+                QuestionManager.init();
+                
+                // Update preview immediately
+                if (QuestionManager.updatePreview) {
+                    QuestionManager.updatePreview();
+                }
+            } else {
+                console.error('QuestionManager is not loaded');
             }
             
+            // DragDrop'un yüklenip yüklenmediğini kontrol et
+            if (typeof DragDrop !== 'undefined') {
+                DragDrop.init();
+            }
+                     
             // Access control toggle
             const isPublicCheckbox = document.getElementById('IsPublic');
             const userAccessControl = document.getElementById('userAccessControl');
-            
-            isPublicCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    userAccessControl.classList.add('d-none');
-                } else {
-                    userAccessControl.classList.remove('d-none');
-                }
-            });
-            
+                     
+            if (isPublicCheckbox && userAccessControl) {
+                isPublicCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        userAccessControl.classList.add('d-none');
+                    } else {
+                        userAccessControl.classList.remove('d-none');
+                    }
+                });
+            }
+                     
             // Image upload preview
             const imageInput = document.querySelector('input[type="file"]');
             const uploadArea = document.querySelector('[data-upload-area]');
             const imagePreview = document.getElementById('imagePreview');
-            
-            uploadArea.addEventListener('click', () => imageInput.click());
-            
-            imageInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        imagePreview.innerHTML = `
-                            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px;">
-                            <p class="mt-1"><small class="text-muted">New image preview</small></p>
-                        `;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+                     
+            if (uploadArea && imageInput) {
+                uploadArea.addEventListener('click', () => imageInput.click());
+                     
+                imageInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (imagePreview) {
+                                imagePreview.innerHTML = `
+                                    <img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px;">
+                                    <p class="mt-1"><small class="text-muted">New image preview</small></p>
+                                `;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
         });
     </script>
 }

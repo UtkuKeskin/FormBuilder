@@ -158,7 +158,7 @@ namespace FormBuilder.Web.Controllers
             }
         }
 
-        // GET: /Template/Edit/5
+       // GET: /Template/Edit/5
         [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
@@ -183,6 +183,8 @@ namespace FormBuilder.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditTemplateViewModel model)
         {
+            ModelState.Remove("AllowedUserIds");
+            
             if (!ModelState.IsValid)
             {
                 ViewBag.Topics = await _templateService.GetTopicsAsync();
@@ -198,16 +200,24 @@ namespace FormBuilder.Web.Controllers
             try
             {
                 var template = await _templateService.GetTemplateByIdAsync(model.Id);
-                if (template == null || template.Version != model.Version)
+                if (template == null)
                 {
-                    ModelState.AddModelError("", "The template has been modified by another user.");
+                    return NotFound();
+                }
+                
+                // Optimistic locking control
+                if (template.Version != model.Version)
+                {
+                    ModelState.AddModelError("", "The template has been modified by another user. Please refresh and try again.");
+                    
+                    model = _mapper.Map<EditTemplateViewModel>(template);
                     ViewBag.Topics = await _templateService.GetTopicsAsync();
                     return View(model);
                 }
 
                 _mapper.Map(model, template);
                 template.UpdatedAt = DateTime.UtcNow;
-                template.Version++;
+                template.Version++; 
 
                 // Handle image upload
                 if (model.ImageFile != null)
@@ -224,11 +234,17 @@ namespace FormBuilder.Web.Controllers
                     template.ImageUrl = uploadResult;
                 }
 
+                // Empty strings for null questions
+                SetEmptyStringsForNullQuestions(template);
+
                 await _templateService.UpdateTemplateAsync(
-                    template, model.Tags, model.AllowedUserIds);
+                    template, 
+                    model.Tags ?? "", 
+                    model.AllowedUserIds ?? new List<int>());
 
                 TempData["Success"] = "Template updated successfully!";
-                return RedirectToAction(nameof(Details), new { id = template.Id });
+                
+                return RedirectToAction(nameof(MyTemplates));
             }
             catch (Exception ex)
             {
@@ -248,18 +264,29 @@ namespace FormBuilder.Web.Controllers
                 return NotFound();
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+            var isAuthenticated = User.Identity.IsAuthenticated;
             
-            if (!template.IsPublic && !User.Identity.IsAuthenticated)
+            // View permission check
+            if (!template.IsPublic && !isAuthenticated)
                 return RedirectToAction("Login", "Account", new { returnUrl = Request.Path });
 
             if (!template.IsPublic && !await _templateService.CanUserAccessTemplateAsync(id, userId))
                 return Forbid();
 
-            // Include Forms with User data for mapping
+            // Map to view model
             var model = _mapper.Map<TemplateViewModel>(template);
-            model.CanEdit = await _templateService.CanUserEditTemplateAsync(id, userId, User.IsInRole("Admin"));
+            
+            // Permission ayarları
+            model.CanEdit = isAuthenticated && await _templateService.CanUserEditTemplateAsync(id, userId, isAdmin);
             model.CanDelete = model.CanEdit;
-            model.IsLikedByCurrentUser = template.Likes.Any(l => l.UserId == userId);
+            
+            // CanAccess - Form doldurma yetkisi
+            model.CanAccess = template.IsPublic || 
+                            (isAuthenticated && (await _templateService.CanUserAccessTemplateAsync(id, userId) || isAdmin));
+            
+            // Like status
+            model.IsLikedByCurrentUser = isAuthenticated && template.Likes.Any(l => l.UserId == userId);
 
             return View(model);
         }

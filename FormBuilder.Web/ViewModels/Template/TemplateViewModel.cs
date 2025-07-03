@@ -19,9 +19,10 @@ namespace FormBuilder.Web.ViewModels.Template
         public DateTime CreatedAt { get; set; }
         public List<string> Tags { get; set; } = new();
         
-        // For list display
+        // Permission properties
         public bool CanEdit { get; set; }
         public bool CanDelete { get; set; }
+        public bool CanAccess { get; set; }
         
         // Questions
         public List<QuestionViewModel> Questions { get; set; } = new();

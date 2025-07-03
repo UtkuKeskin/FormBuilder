@@ -23,7 +23,7 @@ namespace FormBuilder.Web.ViewModels.Template
 
         public bool IsPublic { get; set; } = true;
 
-        public List<int>? AllowedUserIds { get; set; } // Nullable
+        public List<int>? AllowedUserIds { get; set; } = new List<int>();
 
         // Question fields
         // Single-line strings

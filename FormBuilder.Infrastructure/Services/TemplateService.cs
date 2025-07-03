@@ -129,6 +129,7 @@ namespace FormBuilder.Infrastructure.Services
             string tags, 
             List<int> allowedUserIds)
         {
+            // update logic...
             _unitOfWork.Templates.Update(template);
 
             // Update tags
@@ -138,9 +139,15 @@ namespace FormBuilder.Infrastructure.Services
             await UpdateAccessControlAsync(template, allowedUserIds);
 
             await _unitOfWork.SaveAsync();
-            return template;
+            
+            // EF Core change tracking
+            _context.ChangeTracker.Clear();
+            
+            // reload template
+            var updatedTemplate = await GetTemplateByIdAsync(template.Id);
+            
+            return updatedTemplate;
         }
-
         public async Task<bool> DeleteTemplateAsync(int id, string userId, bool isAdmin)
         {
             var template = await GetTemplateByIdAsync(id);

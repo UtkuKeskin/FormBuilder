@@ -106,7 +106,7 @@
                             <div class="mt-4">
                                 @if (User.Identity.IsAuthenticated)
                                 {
-                                    @if (Model.IsPublic || Model.CanEdit)
+                                    @if (Model.CanAccess)
                                     {
                                         <a asp-controller="Form" asp-action="Fill" 
                                         asp-route-templateId="@Model.Id" 
@@ -303,6 +303,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
             <!-- Comments Section -->
             <div class="card mt-4">
