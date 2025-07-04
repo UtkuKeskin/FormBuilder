@@ -148,6 +148,7 @@ namespace FormBuilder.Infrastructure.Services
             
             return updatedTemplate;
         }
+
         public async Task<bool> DeleteTemplateAsync(int id, string userId, bool isAdmin)
         {
             var template = await GetTemplateByIdAsync(id);
@@ -193,7 +194,109 @@ namespace FormBuilder.Infrastructure.Services
             return await _unitOfWork.Topics.GetAll().ToListAsync();
         }
 
-        // Private helper methods
+        //Template Statistics & Aggregation Methods
+        public async Task<Dictionary<string, object>> GetTemplateStatisticsAsync(int templateId)
+        {
+            var template = await GetTemplateByIdAsync(templateId);
+            if (template == null) return new Dictionary<string, object>();
+            
+            var stats = new Dictionary<string, object>();
+            var forms = template.Forms.ToList();
+            
+            AddBasicStats(stats, forms);
+            AddIntegerQuestionStats(stats, template, forms);
+            AddCheckboxQuestionStats(stats, template, forms);
+            
+            return stats;
+        }
+
+        // Small helper methods
+        private void AddBasicStats(Dictionary<string, object> stats, List<Form> forms)
+        {
+            stats["totalResponses"] = forms.Count;
+            stats["uniqueUsers"] = forms.Select(f => f.UserId).Distinct().Count();
+            stats["todayResponses"] = forms.Count(f => f.FilledAt.Date == DateTime.Today);
+            stats["averagePerDay"] = CalculateAveragePerDay(forms);
+        }
+
+        private void AddIntegerQuestionStats(
+            Dictionary<string, object> stats, 
+            Template template, 
+            List<Form> forms)
+        {
+            for (int i = 1; i <= 4; i++)
+            {
+                if (IsQuestionActive(template, "Int", i))
+                {
+                    var answers = GetIntegerAnswers(forms, i);
+                    if (answers.Any())
+                    {
+                        stats[$"int{i}_avg"] = answers.Average();
+                        stats[$"int{i}_min"] = answers.Min();
+                        stats[$"int{i}_max"] = answers.Max();
+                    }
+                }
+            }
+        }
+
+        private void AddCheckboxQuestionStats(
+            Dictionary<string, object> stats, 
+            Template template, 
+            List<Form> forms)
+        {
+            for (int i = 1; i <= 4; i++)
+            {
+                if (IsQuestionActive(template, "Checkbox", i))
+                {
+                    var trueCount = GetCheckboxTrueCount(forms, i);
+                    stats[$"checkbox{i}_yes"] = trueCount;
+                    stats[$"checkbox{i}_no"] = forms.Count - trueCount;
+                    stats[$"checkbox{i}_percent"] = forms.Count > 0 ? 
+                        Math.Round((double)trueCount / forms.Count * 100, 1) : 0;
+                }
+            }
+        }
+
+        private bool IsQuestionActive(Template template, string type, int number)
+        {
+            var prop = template.GetType().GetProperty($"Custom{type}{number}State");
+            return prop?.GetValue(template) as bool? ?? false;
+        }
+
+        private List<int> GetIntegerAnswers(List<Form> forms, int number)
+        {
+            return forms
+                .Select(f => f.GetType()
+                    .GetProperty($"CustomInt{number}Answer")?
+                    .GetValue(f) as int?)
+                .Where(a => a.HasValue)
+                .Select(a => a.Value)
+                .ToList();
+        }
+
+        private int GetCheckboxTrueCount(List<Form> forms, int number)
+        {
+            return forms.Count(f => 
+            {
+                var value = f.GetType()
+                    .GetProperty($"CustomCheckbox{number}Answer")?
+                    .GetValue(f) as bool?;
+                return value == true;
+            });
+        }
+
+        private double CalculateAveragePerDay(List<Form> forms)
+        {
+            if (!forms.Any()) return 0;
+            
+            var firstDate = forms.Min(f => f.FilledAt).Date;
+            var lastDate = forms.Max(f => f.FilledAt).Date;
+            var daysDiff = (lastDate - firstDate).Days + 1;
+            
+            return Math.Round((double)forms.Count / daysDiff, 2);
+        }
+
+        // Private helper methods (existing)
         private IQueryable<Template> ApplySorting(
             IQueryable<Template> query, 
             string sortBy, 

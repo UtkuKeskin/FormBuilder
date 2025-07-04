@@ -33,9 +33,9 @@ namespace FormBuilder.Web.Mappings
                         Id = f.Id,
                         UserId = f.UserId,
                         UserName = f.User != null ? f.User.UserName : "Unknown",
-                        FilledAt = f.FilledAt
+                        FilledAt = f.FilledAt,
+                        DisplayAnswers = GetDisplayAnswers(f, src)
                     }).ToList()));
-                    
 
             // CreateTemplateViewModel to Template
             CreateMap<CreateTemplateViewModel, Template>()
@@ -65,80 +65,121 @@ namespace FormBuilder.Web.Mappings
         private List<QuestionViewModel> GetQuestionsFromTemplate(Template template)
         {
             var questions = new List<QuestionViewModel>();
-            int order = 1;
-
-            // Define question configurations
-            var questionConfigs = new[]
+            var questionTypes = new[] { "String", "Text", "Int", "Checkbox" };
+            
+            foreach (var type in questionTypes)
             {
-                // String questions
-                new { Type = "string", Number = 1, State = template.CustomString1State, 
-                      Question = template.CustomString1Question, Description = template.CustomString1Description, 
-                      ShowInTable = template.CustomString1ShowInTable },
-                new { Type = "string", Number = 2, State = template.CustomString2State, 
-                      Question = template.CustomString2Question, Description = template.CustomString2Description, 
-                      ShowInTable = template.CustomString2ShowInTable },
-                new { Type = "string", Number = 3, State = template.CustomString3State, 
-                      Question = template.CustomString3Question, Description = template.CustomString3Description, 
-                      ShowInTable = template.CustomString3ShowInTable },
-                new { Type = "string", Number = 4, State = template.CustomString4State, 
-                      Question = template.CustomString4Question, Description = template.CustomString4Description, 
-                      ShowInTable = template.CustomString4ShowInTable },
-                
-                // Text questions
-                new { Type = "text", Number = 1, State = template.CustomText1State, 
-                      Question = template.CustomText1Question, Description = template.CustomText1Description, 
-                      ShowInTable = template.CustomText1ShowInTable },
-                new { Type = "text", Number = 2, State = template.CustomText2State, 
-                      Question = template.CustomText2Question, Description = template.CustomText2Description, 
-                      ShowInTable = template.CustomText2ShowInTable },
-                new { Type = "text", Number = 3, State = template.CustomText3State, 
-                      Question = template.CustomText3Question, Description = template.CustomText3Description, 
-                      ShowInTable = template.CustomText3ShowInTable },
-                new { Type = "text", Number = 4, State = template.CustomText4State, 
-                      Question = template.CustomText4Question, Description = template.CustomText4Description, 
-                      ShowInTable = template.CustomText4ShowInTable },
-                
-                // Integer questions
-                new { Type = "integer", Number = 1, State = template.CustomInt1State, 
-                      Question = template.CustomInt1Question, Description = template.CustomInt1Description, 
-                      ShowInTable = template.CustomInt1ShowInTable },
-                new { Type = "integer", Number = 2, State = template.CustomInt2State, 
-                      Question = template.CustomInt2Question, Description = template.CustomInt2Description, 
-                      ShowInTable = template.CustomInt2ShowInTable },
-                new { Type = "integer", Number = 3, State = template.CustomInt3State, 
-                      Question = template.CustomInt3Question, Description = template.CustomInt3Description, 
-                      ShowInTable = template.CustomInt3ShowInTable },
-                new { Type = "integer", Number = 4, State = template.CustomInt4State, 
-                      Question = template.CustomInt4Question, Description = template.CustomInt4Description, 
-                      ShowInTable = template.CustomInt4ShowInTable },
-                
-                // Checkbox questions
-                new { Type = "checkbox", Number = 1, State = template.CustomCheckbox1State, 
-                      Question = template.CustomCheckbox1Question, Description = template.CustomCheckbox1Description, 
-                      ShowInTable = template.CustomCheckbox1ShowInTable },
-                new { Type = "checkbox", Number = 2, State = template.CustomCheckbox2State, 
-                      Question = template.CustomCheckbox2Question, Description = template.CustomCheckbox2Description, 
-                      ShowInTable = template.CustomCheckbox2ShowInTable },
-                new { Type = "checkbox", Number = 3, State = template.CustomCheckbox3State, 
-                      Question = template.CustomCheckbox3Question, Description = template.CustomCheckbox3Description, 
-                      ShowInTable = template.CustomCheckbox3ShowInTable },
-                new { Type = "checkbox", Number = 4, State = template.CustomCheckbox4State, 
-                      Question = template.CustomCheckbox4Question, Description = template.CustomCheckbox4Description, 
-                      ShowInTable = template.CustomCheckbox4ShowInTable }
-            };
-
-            // Filter and map active questions
-            return questionConfigs
-                .Where(q => q.State && !string.IsNullOrEmpty(q.Question))
-                .Select((q, index) => new QuestionViewModel
+                for (int i = 1; i <= 4; i++)
                 {
-                    Type = q.Type,
-                    Question = q.Question,
-                    Description = q.Description,
-                    ShowInTable = q.ShowInTable,
-                    Order = index + 1
-                })
-                .ToList();
+                    if (IsQuestionActive(template, type, i))
+                    {
+                        questions.Add(CreateQuestionViewModel(template, type, i, questions.Count + 1));
+                    }
+                }
+            }
+            
+            return questions;
+        }
+
+        private bool IsQuestionActive(Template template, string type, int number)
+        {
+            var state = GetPropertyValue<bool>(template, $"Custom{type}{number}State");
+            var question = GetPropertyValue<string>(template, $"Custom{type}{number}Question");
+            return state && !string.IsNullOrEmpty(question);
+        }
+
+        private QuestionViewModel CreateQuestionViewModel(Template template, string type, int number, int order)
+        {
+            return new QuestionViewModel
+            {
+                Type = type.ToLower() == "int" ? "integer" : type.ToLower(),
+                Question = GetPropertyValue<string>(template, $"Custom{type}{number}Question"),
+                Description = GetPropertyValue<string>(template, $"Custom{type}{number}Description"),
+                ShowInTable = GetPropertyValue<bool>(template, $"Custom{type}{number}ShowInTable"),
+                Order = order
+            };
+        }
+
+        private T GetPropertyValue<T>(object obj, string propertyName)
+        {
+            var prop = obj.GetType().GetProperty(propertyName);
+            var value = prop?.GetValue(obj);
+            return value is T ? (T)value : default(T);
+        }
+
+        //DisplayAnswers Logic
+        private Dictionary<string, string> GetDisplayAnswers(Form form, Template template)
+        {
+            var answers = new Dictionary<string, string>();
+            
+            // String answers
+            for (int i = 1; i <= 4; i++)
+            {
+                if (GetShowInTable(template, "String", i))
+                {
+                    var question = GetQuestion(template, "String", i);
+                    var answer = GetAnswer(form, "String", i);
+                    if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
+                        answers[question] = answer;
+                }
+            }
+            
+            // Text answers
+            for (int i = 1; i <= 4; i++)
+            {
+                if (GetShowInTable(template, "Text", i))
+                {
+                    var question = GetQuestion(template, "Text", i);
+                    var answer = GetAnswer(form, "Text", i);
+                    if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
+                        answers[question] = answer.Length > 50 ? answer.Substring(0, 50) + "..." : answer;
+                }
+            }
+            
+            // Integer answers
+            for (int i = 1; i <= 4; i++)
+            {
+                if (GetShowInTable(template, "Int", i))
+                {
+                    var question = GetQuestion(template, "Int", i);
+                    var answer = GetAnswer(form, "Int", i);
+                    if (!string.IsNullOrEmpty(question) && answer != null)
+                        answers[question] = answer;
+                }
+            }
+            
+            // Checkbox answers
+            for (int i = 1; i <= 4; i++)
+            {
+                if (GetShowInTable(template, "Checkbox", i))
+                {
+                    var question = GetQuestion(template, "Checkbox", i);
+                    var answer = GetAnswer(form, "Checkbox", i);
+                    if (!string.IsNullOrEmpty(question))
+                        answers[question] = answer == "True" ? "Yes" : "No";
+                }
+            }
+            
+            return answers;
+        }
+
+        //HELPER METHODS
+        private bool GetShowInTable(Template template, string type, int number)
+        {
+            var prop = template.GetType().GetProperty($"Custom{type}{number}ShowInTable");
+            return prop?.GetValue(template) as bool? ?? false;
+        }
+
+        private string GetQuestion(Template template, string type, int number)
+        {
+            var prop = template.GetType().GetProperty($"Custom{type}{number}Question");
+            return prop?.GetValue(template)?.ToString() ?? "";
+        }
+
+        private string GetAnswer(Form form, string type, int number)
+        {
+            var prop = form.GetType().GetProperty($"Custom{type}{number}Answer");
+            return prop?.GetValue(form)?.ToString();
         }
     }
 }

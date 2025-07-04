@@ -1,0 +1,390 @@
+@model FormBuilder.Web.ViewModels.Template.TemplateViewModel
+@{
+    // ✅ DOĞRU: Model.Questions'dan ShowInTable olanları filtrele
+    var showInTableQuestions = Model.Questions
+        .Where(q => q.ShowInTable)
+        .OrderBy(q => q.Order)
+        .Take(3)  // Maksimum 3 sütun
+        .ToList();
+}
+
+<div class="results-tab-content">
+    @if (Model.Forms != null && Model.Forms.Any())
+    {
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h3>@Model.Forms.Count()</h3>
+                        <p class="mb-0">Total Responses</p>
+                        <small>All forms submitted</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3>@Model.Forms.Select(f => f.UserId).Distinct().Count()</h3>
+                        <p class="mb-0">Unique Users</p>
+                        <small>Different respondents</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3>@Model.Forms.Count(f => f.FilledAt.Date == DateTime.Today)</h3>
+                        <p class="mb-0">Today's Responses</p>
+                        <small>Last 24 hours</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        @{
+                            var uniqueUsers = Model.Forms.Select(f => f.UserId).Distinct().Count();
+                            var avgPerUser = uniqueUsers > 0 ? (double)Model.Forms.Count() / uniqueUsers : 0;
+                        }
+                        <h3>@avgPerUser.ToString("F1")</h3>
+                        <p class="mb-0">Avg per User</p>
+                        <small>Responses per person</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Timeline Chart -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line"></i> Response Timeline
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="timelineChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ShowInTable Questions Summary -->
+        @if (showInTableQuestions.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-table"></i> Questions Statistics (ShowInTable Fields)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Type</th>
+                                    <th>Statistics</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var question in showInTableQuestions)
+                                {
+                                    <tr>
+                                        <td>@question.Question</td>
+                                        <td>
+                                            <span class="badge bg-secondary">@question.Type.ToUpper()</span>
+                                        </td>
+                                        <td>
+                                            @Html.Raw(GetQuestionStatistics(Model.Forms, question))
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Recent Responses Table (with ShowInTable columns) -->
+        @if (Model.CanEdit)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list"></i> Recent Responses
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 150px;">User</th>
+                                    <th style="width: 120px;">Submitted</th>
+                                    @foreach (var question in showInTableQuestions)
+                                    {
+                                        <th title="@question.Question">
+                                            @(question.Question.Length > 20 ? question.Question.Substring(0, 20) + "..." : question.Question)
+                                        </th>
+                                    }
+                                    <th style="width: 80px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var form in Model.Forms.OrderByDescending(f => f.FilledAt).Take(20))
+                                {
+                                    <tr>
+                                        <td>@form.UserName</td>
+                                        <td>
+                                            <small>@form.FilledAt.ToString("dd MMM HH:mm")</small>
+                                        </td>
+                                        @foreach (var question in showInTableQuestions)
+                                        {
+                                            <td>
+                                                <small>@Html.Raw(GetFormAnswer(form, question))</small>
+                                            </td>
+                                        }
+                                        <td>
+                                            <a asp-controller="Form" asp-action="View" 
+                                               asp-route-id="@form.Id" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="View full response">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.Forms.Count() > 20)
+                    {
+                        <div class="card-footer text-center">
+                            <small class="text-muted">
+                                Showing latest 20 of @Model.Forms.Count() responses
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No responses yet</h5>
+            <p class="text-muted">Share your template to start collecting data!</p>
+            @if (Model.CanAccess)
+            {
+                <a asp-controller="Form" asp-action="Fill" asp-route-templateId="@Model.Id" 
+                   class="btn btn-primary">
+                    <i class="fas fa-file-alt"></i> Fill This Form
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@functions {
+    string GetQuestionStatistics(IEnumerable<FormBuilder.Web.ViewModels.Template.FormViewModel> forms, FormBuilder.Web.ViewModels.Template.QuestionViewModel question)
+    {
+        if (!forms.Any()) return "<small class='text-muted'>No data</small>";
+        
+        var stats = new System.Text.StringBuilder();
+        var responseCount = 0;
+        
+        // DisplayAnswers'dan bu question için cevap sayısını hesapla
+        foreach (var form in forms)
+        {
+            if (form.DisplayAnswers != null && form.DisplayAnswers.ContainsKey(question.Question))
+            {
+                responseCount++;
+            }
+        }
+        
+        switch (question.Type.ToLower())
+        {
+            case "integer":
+                // Integer için average, min, max hesapla
+                var intValues = new List<int>();
+                foreach (var form in forms)
+                {
+                    if (form.DisplayAnswers != null && form.DisplayAnswers.ContainsKey(question.Question))
+                    {
+                        if (int.TryParse(form.DisplayAnswers[question.Question], out int val))
+                        {
+                            intValues.Add(val);
+                        }
+                    }
+                }
+                
+                if (intValues.Any())
+                {
+                    stats.Append($"<small><strong>Avg:</strong> {intValues.Average():F1}<br>");
+                    stats.Append($"<strong>Range:</strong> {intValues.Min()}-{intValues.Max()}<br>");
+                    stats.Append($"<strong>Count:</strong> {intValues.Count}</small>");
+                }
+                else
+                {
+                    stats.Append("<small class='text-muted'>No numeric data</small>");
+                }
+                break;
+                
+            case "checkbox":
+                // Checkbox için Yes/No sayılarını hesapla
+                var yesCount = 0;
+                var totalCheckbox = 0;
+                
+                foreach (var form in forms)
+                {
+                    if (form.DisplayAnswers != null && form.DisplayAnswers.ContainsKey(question.Question))
+                    {
+                        totalCheckbox++;
+                        if (form.DisplayAnswers[question.Question].ToLower().Contains("yes") || 
+                            form.DisplayAnswers[question.Question].ToLower().Contains("true"))
+                        {
+                            yesCount++;
+                        }
+                    }
+                }
+                
+                if (totalCheckbox > 0)
+                {
+                    var percentage = (double)yesCount / totalCheckbox * 100;
+                    stats.Append($"<small><strong>Yes:</strong> {yesCount} ({percentage:F1}%)<br>");
+                    stats.Append($"<strong>No:</strong> {totalCheckbox - yesCount}<br>");
+                    stats.Append($"<strong>Total:</strong> {totalCheckbox}</small>");
+                }
+                else
+                {
+                    stats.Append("<small class='text-muted'>No responses</small>");
+                }
+                break;
+                
+            case "string":
+            case "text":
+            default:
+                // Text için sadece response count
+                stats.Append($"<small><strong>Responses:</strong> {responseCount}<br>");
+                
+                // En popüler cevapları göster (ilk 3)
+                if (responseCount > 0)
+                {
+                    var answerGroups = forms
+                        .Where(f => f.DisplayAnswers != null && f.DisplayAnswers.ContainsKey(question.Question))
+                        .GroupBy(f => f.DisplayAnswers[question.Question])
+                        .OrderByDescending(g => g.Count())
+                        .Take(3);
+                    
+                    if (answerGroups.Any())
+                    {
+                        stats.Append("<strong>Top answers:</strong><br>");
+                        foreach (var group in answerGroups)
+                        {
+                            var shortAnswer = group.Key.Length > 15 ? group.Key.Substring(0, 15) + "..." : group.Key;
+                            stats.Append($"• {shortAnswer} ({group.Count()})<br>");
+                        }
+                    }
+                }
+                stats.Append("</small>");
+                break;
+        }
+        
+        return stats.ToString();
+    }
+    
+    string GetFormAnswer(FormBuilder.Web.ViewModels.Template.FormViewModel form, FormBuilder.Web.ViewModels.Template.QuestionViewModel question)
+    {
+        // ✅ DOĞRU: DisplayAnswers'dan question key ile al
+        if (form.DisplayAnswers != null && form.DisplayAnswers.ContainsKey(question.Question))
+        {
+            var answer = form.DisplayAnswers[question.Question];
+            if (!string.IsNullOrEmpty(answer))
+            {
+                // Uzun cevapları kısalt
+                if (answer.Length > 30)
+                    return answer.Substring(0, 30) + "...";
+                return answer;
+            }
+        }
+        
+        return "<em class='text-muted'>-</em>";
+    }
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    @if (Model.Forms != null && Model.Forms.Any())
+    {
+        <text>
+        // Prepare timeline data
+        const formsData = @Html.Raw(Json.Serialize(Model.Forms.Select(f => new { 
+            date = f.FilledAt.ToString("yyyy-MM-dd"),
+            hour = f.FilledAt.Hour
+        })));
+        
+        // Group by date
+        const dateGroups = formsData.reduce((acc, form) => {
+            acc[form.date] = (acc[form.date] || 0) + 1;
+            return acc;
+        }, {});
+        
+        // Sort dates and prepare data
+        const sortedDates = Object.keys(dateGroups).sort();
+        const chartData = sortedDates.map(date => dateGroups[date]);
+        
+        // Create timeline chart
+        const ctx = document.getElementById('timelineChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Daily Responses',
+                        data: chartData,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Form Submissions Over Time'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxTicksLimit: 10
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        </text>
+    }
+});
+</script>

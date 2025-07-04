@@ -30,7 +30,7 @@ namespace FormBuilder.Web.ViewModels.Template
         // Forms collection for Results tab
         public List<FormViewModel> Forms { get; set; } = new();
     }
-    
+
     // Form view model for template details
     public class FormViewModel
     {
@@ -38,6 +38,8 @@ namespace FormBuilder.Web.ViewModels.Template
         public string UserId { get; set; }
         public string UserName { get; set; }
         public DateTime FilledAt { get; set; }
+        
+        public Dictionary<string, string> DisplayAnswers { get; set; } = new();
     }
     
     public class QuestionViewModel

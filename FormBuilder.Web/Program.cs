@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Localization;
 using FormBuilder.Web.Resources;
 using Microsoft.Extensions.Localization;
 using FormBuilder.Infrastructure.Services;
-using FormBuilder.Core.Interfaces;
 using FormBuilder.Web.Profiles;
 
 Log.Logger = new LoggerConfiguration()
