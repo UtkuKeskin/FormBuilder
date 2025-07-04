@@ -130,8 +130,14 @@ const QuestionManager = (function() {
     // Create question HTML
     function createQuestionHtml(type, number) {
         const config = questionTypes[type];
-        const typeCapitalized = type.charAt(0).toUpperCase() + type.slice(1);
-        const prefix = `Custom${typeCapitalized}${number}`;
+        
+        const typeMap = {
+            'string': 'String',
+            'text': 'Text',
+            'integer': 'Int',
+            'checkbox': 'Checkbox'
+        };
+        const prefix = `Custom${typeMap[type]}${number}`;
         
         return `
             <div class="question-item card mb-3 border-${config.color}" 

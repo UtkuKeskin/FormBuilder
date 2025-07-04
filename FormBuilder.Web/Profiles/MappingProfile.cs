@@ -16,6 +16,7 @@ namespace FormBuilder.Web.Profiles
             CreateMap<RegisterViewModel, User>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email));
 
+            /*
             // Template mappings
             CreateMap<Template, TemplateViewModel>()
                 .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.UserName))
@@ -30,6 +31,7 @@ namespace FormBuilder.Web.Profiles
             CreateMap<Template, EditTemplateViewModel>();
             CreateMap<EditTemplateViewModel, Template>()
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+            */
 
             // Form mappings
             CreateMap<Form, ViewModels.FormViewModel>()

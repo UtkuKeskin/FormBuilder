@@ -6,6 +6,7 @@ using AutoMapper;
 using FormBuilder.Core.Entities;
 using FormBuilder.Core.Interfaces;
 using FormBuilder.Web.ViewModels.Template;
+using FormBuilder.Web.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,9 @@ namespace FormBuilder.Web.Controllers
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
         private readonly ILogger<TemplateController> _logger;
+        
+        // Constants
+        private const int DefaultPageSize = 10;
 
         public TemplateController(
             ITemplateService templateService,
@@ -46,30 +50,24 @@ namespace FormBuilder.Web.Controllers
             
             var (templates, totalCount) = await _templateService.GetTemplatesAsync(
                 null,
-                page, 10, sort, order, search, topic);
+                page, DefaultPageSize, sort, order, search, topic);
 
-            var viewModels = templates.Select(t => {
-                var vm = _mapper.Map<TemplateViewModel>(t);
-                vm.CanEdit = isAuthenticated && (t.UserId == userId || User.IsInRole("Admin"));
-                vm.CanDelete = vm.CanEdit;
-                vm.IsLikedByCurrentUser = isAuthenticated && t.Likes.Any(l => l.UserId == userId);
-                return vm;
-            }).ToList();
+            var viewModels = MapTemplateViewModels(templates, userId, isAuthenticated);
 
             var model = new TemplateListViewModel
             {
                 Templates = viewModels,
                 CurrentPage = page,
-                PageSize = 10,
+                PageSize = DefaultPageSize,
                 TotalCount = totalCount,
-                TotalPages = (int)Math.Ceiling(totalCount / 10.0),
+                TotalPages = (int)Math.Ceiling(totalCount / (double)DefaultPageSize),
                 SortBy = sort,
                 SortOrder = order,
                 SearchTerm = search,
                 TopicFilter = topic
             };
 
-            ViewBag.Topics = await _templateService.GetTopicsAsync();
+            await LoadTopicsAsync();
             ViewBag.IsAuthenticated = isAuthenticated;
             return View(model);
         }
@@ -78,7 +76,7 @@ namespace FormBuilder.Web.Controllers
         [Authorize]
         public async Task<IActionResult> Create()
         {
-            ViewBag.Topics = await _templateService.GetTopicsAsync();
+            await LoadTopicsAsync();
             return View(new CreateTemplateViewModel());
         }
 
@@ -88,82 +86,38 @@ namespace FormBuilder.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateTemplateViewModel model)
         {
-            if (string.IsNullOrWhiteSpace(model.Tags)) model.Tags = null;
-            
-            // AllowedUserIds null check
-            if (model.AllowedUserIds == null) model.AllowedUserIds = new List<int>();
-            
-            _logger.LogInformation($"=== CREATE POST - ModelState.IsValid: {ModelState.IsValid} ===");
+            NormalizeModel(model);
             
             if (!ModelState.IsValid)
             {
-                foreach (var key in ModelState.Keys)
-                {
-                    var state = ModelState[key];
-                    foreach (var error in state.Errors)
-                    {
-                        _logger.LogError($"Field: {key}, Error: {error.ErrorMessage}");
-                    }
-                }
-                
-                ViewBag.Topics = await _templateService.GetTopicsAsync();
+                LogModelStateErrors();
+                await LoadTopicsAsync();
                 return View(model);
             }
 
             try
             {
-                var template = _mapper.Map<Template>(model);
-                template.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                template.CreatedAt = DateTime.UtcNow;
-                template.UpdatedAt = DateTime.UtcNow;
+                var template = await CreateTemplateAsync(model);
                 
-                if (model.ImageFile != null)
-            {
-                try
-                {
-                    var uploadResult = await _cloudinaryService.UploadImageAsync(
-                        model.ImageFile.OpenReadStream(), 
-                        model.ImageFile.FileName);
-                    template.ImageUrl = uploadResult;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Image upload failed");
-                    ModelState.AddModelError("ImageFile", "Image upload failed");
-                    ViewBag.Topics = await _templateService.GetTopicsAsync();
-                    return View(model);
-                }
-            }
-            else
-            {
-                template.ImageUrl = "";
-            }
-                
-                SetEmptyStringsForNullQuestions(template);
-
-                await _templateService.CreateTemplateAsync(
-                    template, 
-                    model.Tags ?? "", 
-                    model.AllowedUserIds ?? new List<int>());
-
                 TempData["Success"] = "Template created successfully!";
                 return RedirectToAction(nameof(MyTemplates));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating template");
-                ModelState.AddModelError("", $"An error occurred: {ex.Message}");
-                ViewBag.Topics = await _templateService.GetTopicsAsync();
+                _logger.LogError(ex, "Error creating template for user {UserId}", 
+                    User.FindFirstValue(ClaimTypes.NameIdentifier));
+                ModelState.AddModelError(string.Empty, $"An error occurred: {ex.Message}");
+                await LoadTopicsAsync();
                 return View(model);
             }
         }
 
-       // GET: /Template/Edit/5
+        // GET: /Template/Edit/5
         [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
+            var isAdmin = User.IsInRole(AppConstants.AdminRole);
 
             if (!await _templateService.CanUserEditTemplateAsync(id, userId, isAdmin))
                 return Forbid();
@@ -173,7 +127,7 @@ namespace FormBuilder.Web.Controllers
                 return NotFound();
 
             var model = _mapper.Map<EditTemplateViewModel>(template);
-            ViewBag.Topics = await _templateService.GetTopicsAsync();
+            await LoadTopicsAsync();
             return View(model);
         }
 
@@ -187,12 +141,12 @@ namespace FormBuilder.Web.Controllers
             
             if (!ModelState.IsValid)
             {
-                ViewBag.Topics = await _templateService.GetTopicsAsync();
+                await LoadTopicsAsync();
                 return View(model);
             }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
+            var isAdmin = User.IsInRole(AppConstants.AdminRole);
 
             if (!await _templateService.CanUserEditTemplateAsync(model.Id, userId, isAdmin))
                 return Forbid();
@@ -201,56 +155,30 @@ namespace FormBuilder.Web.Controllers
             {
                 var template = await _templateService.GetTemplateByIdAsync(model.Id);
                 if (template == null)
-                {
                     return NotFound();
-                }
                 
                 // Optimistic locking control
                 if (template.Version != model.Version)
                 {
-                    ModelState.AddModelError("", "The template has been modified by another user. Please refresh and try again.");
+                    ModelState.AddModelError(string.Empty, 
+                        "The template has been modified by another user. Please refresh and try again.");
                     
                     model = _mapper.Map<EditTemplateViewModel>(template);
-                    ViewBag.Topics = await _templateService.GetTopicsAsync();
+                    await LoadTopicsAsync();
                     return View(model);
                 }
 
-                _mapper.Map(model, template);
-                template.UpdatedAt = DateTime.UtcNow;
-                template.Version++; 
-
-                // Handle image upload
-                if (model.ImageFile != null)
-                {
-                    // Delete old image if exists
-                    if (!string.IsNullOrEmpty(template.ImageUrl))
-                    {
-                        await _cloudinaryService.DeleteImageAsync(template.ImageUrl);
-                    }
-
-                    var uploadResult = await _cloudinaryService.UploadImageAsync(
-                        model.ImageFile.OpenReadStream(), 
-                        model.ImageFile.FileName);
-                    template.ImageUrl = uploadResult;
-                }
-
-                // Empty strings for null questions
-                SetEmptyStringsForNullQuestions(template);
-
-                await _templateService.UpdateTemplateAsync(
-                    template, 
-                    model.Tags ?? "", 
-                    model.AllowedUserIds ?? new List<int>());
+                await UpdateTemplateAsync(template, model);
 
                 TempData["Success"] = "Template updated successfully!";
-                
                 return RedirectToAction(nameof(MyTemplates));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating template");
-                ModelState.AddModelError("", "An error occurred while updating the template.");
-                ViewBag.Topics = await _templateService.GetTopicsAsync();
+                _logger.LogError(ex, "Error updating template {TemplateId} for user {UserId}", 
+                    model.Id, userId);
+                ModelState.AddModelError(string.Empty, "An error occurred while updating the template.");
+                await LoadTopicsAsync();
                 return View(model);
             }
         }
@@ -264,7 +192,7 @@ namespace FormBuilder.Web.Controllers
                 return NotFound();
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
+            var isAdmin = User.IsInRole(AppConstants.AdminRole);
             var isAuthenticated = User.Identity.IsAuthenticated;
             
             // View permission check
@@ -274,20 +202,8 @@ namespace FormBuilder.Web.Controllers
             if (!template.IsPublic && !await _templateService.CanUserAccessTemplateAsync(id, userId))
                 return Forbid();
 
-            // Map to view model
-            var model = _mapper.Map<TemplateViewModel>(template);
+            var model = await MapTemplateDetailsAsync(template, userId, isAdmin, isAuthenticated);
             
-            // Permission ayarları
-            model.CanEdit = isAuthenticated && await _templateService.CanUserEditTemplateAsync(id, userId, isAdmin);
-            model.CanDelete = model.CanEdit;
-            
-            // CanAccess - Form doldurma yetkisi
-            model.CanAccess = template.IsPublic || 
-                            (isAuthenticated && (await _templateService.CanUserAccessTemplateAsync(id, userId) || isAdmin));
-            
-            // Like status
-            model.IsLikedByCurrentUser = isAuthenticated && template.Likes.Any(l => l.UserId == userId);
-
             return View(model);
         }
 
@@ -298,7 +214,7 @@ namespace FormBuilder.Web.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
+            var isAdmin = User.IsInRole(AppConstants.AdminRole);
 
             var result = await _templateService.DeleteTemplateAsync(id, userId, isAdmin);
             
@@ -320,7 +236,7 @@ namespace FormBuilder.Web.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var (templates, totalCount) = await _templateService.GetTemplatesAsync(
-                userId, page, 10, sort, order);
+                userId, page, DefaultPageSize, sort, order);
 
             var viewModels = templates.Select(t => {
                 var vm = _mapper.Map<TemplateViewModel>(t);
@@ -333,26 +249,159 @@ namespace FormBuilder.Web.Controllers
             {
                 Templates = viewModels,
                 CurrentPage = page,
-                PageSize = 10,
+                PageSize = DefaultPageSize,
                 TotalCount = totalCount,
-                TotalPages = (int)Math.Ceiling(totalCount / 10.0),
+                TotalPages = (int)Math.Ceiling(totalCount / (double)DefaultPageSize),
                 SortBy = sort,
                 SortOrder = order
             };
-            ViewBag.Topics = await _templateService.GetTopicsAsync();
+            
+            await LoadTopicsAsync();
             return View(model);
         }
 
-        // Private helper method
+        #region Private Helper Methods
+
+        private async Task LoadTopicsAsync()
+        {
+            ViewBag.Topics = await _templateService.GetTopicsAsync();
+        }
+
+        private void NormalizeModel(CreateTemplateViewModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Tags)) 
+                model.Tags = null;
+            
+            model.AllowedUserIds ??= new List<int>();
+        }
+
+        private void LogModelStateErrors()
+        {
+            foreach (var key in ModelState.Keys)
+            {
+                var state = ModelState[key];
+                foreach (var error in state.Errors)
+                {
+                    _logger.LogError("Validation error - Field: {Field}, Error: {Error}", 
+                        key, error.ErrorMessage);
+                }
+            }
+        }
+
+        private List<TemplateViewModel> MapTemplateViewModels(
+            IEnumerable<Template> templates, 
+            string userId, 
+            bool isAuthenticated)
+        {
+            return templates.Select(t => {
+                var vm = _mapper.Map<TemplateViewModel>(t);
+                vm.CanEdit = isAuthenticated && IsOwnerOrAdmin(t.UserId, userId);
+                vm.CanDelete = vm.CanEdit;
+                vm.IsLikedByCurrentUser = isAuthenticated && t.Likes.Any(l => l.UserId == userId);
+                return vm;
+            }).ToList();
+        }
+
+        private bool IsOwnerOrAdmin(string templateUserId, string currentUserId)
+        {
+            return templateUserId == currentUserId || User.IsInRole(AppConstants.AdminRole);
+        }
+
+        private async Task<Template> CreateTemplateAsync(CreateTemplateViewModel model)
+        {
+            var template = _mapper.Map<Template>(model);
+            template.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            template.CreatedAt = DateTime.UtcNow;
+            template.UpdatedAt = DateTime.UtcNow;
+            
+            // Handle image upload
+            if (model.ImageFile != null)
+            {
+                template.ImageUrl = await UploadImageAsync(model.ImageFile);
+            }
+            else
+            {
+                template.ImageUrl = string.Empty;
+            }
+            
+            SetEmptyStringsForNullQuestions(template);
+
+            await _templateService.CreateTemplateAsync(
+                template, 
+                model.Tags ?? string.Empty, 
+                model.AllowedUserIds ?? new List<int>());
+
+            return template;
+        }
+
+        private async Task UpdateTemplateAsync(Template template, EditTemplateViewModel model)
+        {
+            _mapper.Map(model, template);
+            template.UpdatedAt = DateTime.UtcNow;
+            template.Version++;
+
+            // Handle image upload
+            if (model.ImageFile != null)
+            {
+                // Delete old image if exists
+                if (!string.IsNullOrEmpty(template.ImageUrl))
+                {
+                    await _cloudinaryService.DeleteImageAsync(template.ImageUrl);
+                }
+
+                template.ImageUrl = await UploadImageAsync(model.ImageFile);
+            }
+
+            SetEmptyStringsForNullQuestions(template);
+
+            await _templateService.UpdateTemplateAsync(
+                template, 
+                model.Tags ?? string.Empty, 
+                model.AllowedUserIds ?? new List<int>());
+        }
+
+        private async Task<string> UploadImageAsync(IFormFile imageFile)
+        {
+            try
+            {
+                using (var stream = imageFile.OpenReadStream())
+                {
+                    return await _cloudinaryService.UploadImageAsync(
+                        stream, 
+                        imageFile.FileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Image upload failed");
+                throw new InvalidOperationException("Image upload failed. Please try again.");
+            }
+        }
+
+        private async Task<TemplateViewModel> MapTemplateDetailsAsync(
+            Template template, 
+            string userId, 
+            bool isAdmin, 
+            bool isAuthenticated)
+        {
+            var model = _mapper.Map<TemplateViewModel>(template);
+            
+            model.CanEdit = isAuthenticated && 
+                await _templateService.CanUserEditTemplateAsync(template.Id, userId, isAdmin);
+            model.CanDelete = model.CanEdit;
+            model.CanAccess = template.IsPublic || 
+                (isAuthenticated && (await _templateService.CanUserAccessTemplateAsync(template.Id, userId) || isAdmin));
+            model.IsLikedByCurrentUser = isAuthenticated && 
+                template.Likes.Any(l => l.UserId == userId);
+
+            return model;
+        }
+
         private void SetEmptyStringsForNullQuestions(Template template)
         {
-            // String Questions
             SetEmptyStringsForQuestionType(template, "String", 4);
-            // Text Questions
             SetEmptyStringsForQuestionType(template, "Text", 4);
-            // Integer Questions
             SetEmptyStringsForQuestionType(template, "Int", 4);
-            // Checkbox Questions
             SetEmptyStringsForQuestionType(template, "Checkbox", 4);
         }
 
@@ -364,11 +413,13 @@ namespace FormBuilder.Web.Controllers
                 var descProp = template.GetType().GetProperty($"Custom{type}{i}Description");
                 
                 if (questionProp?.GetValue(template) == null)
-                    questionProp?.SetValue(template, "");
+                    questionProp?.SetValue(template, string.Empty);
                 
                 if (descProp?.GetValue(template) == null)
-                    descProp?.SetValue(template, "");
+                    descProp?.SetValue(template, string.Empty);
             }
         }
+
+        #endregion
     }
 }
