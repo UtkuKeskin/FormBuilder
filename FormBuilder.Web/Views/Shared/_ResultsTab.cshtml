@@ -1,10 +1,10 @@
 @model FormBuilder.Web.ViewModels.Template.TemplateViewModel
 @{
-    // ✅ DOĞRU: Model.Questions'dan ShowInTable olanları filtrele
+    //  Model.Questions'dan ShowInTable olanları filtrele
     var showInTableQuestions = Model.Questions
         .Where(q => q.ShowInTable)
         .OrderBy(q => q.Order)
-        .Take(3)  // Maksimum 3 sütun
+        .Take(3)  // Maks 3 
         .ToList();
 }
 
@@ -211,7 +211,7 @@
         switch (question.Type.ToLower())
         {
             case "integer":
-                // Integer için average, min, max hesapla
+                // average, min, max for integer
                 var intValues = new List<int>();
                 foreach (var form in forms)
                 {
@@ -237,7 +237,7 @@
                 break;
                 
             case "checkbox":
-                // Checkbox için Yes/No sayılarını hesapla
+                //Yes/No for checkbox
                 var yesCount = 0;
                 var totalCheckbox = 0;
                 
@@ -270,10 +270,10 @@
             case "string":
             case "text":
             default:
-                // Text için sadece response count
+                //only response count for Text
                 stats.Append($"<small><strong>Responses:</strong> {responseCount}<br>");
                 
-                // En popüler cevapları göster (ilk 3)
+                // show most popular responds (first 3)
                 if (responseCount > 0)
                 {
                     var answerGroups = forms
@@ -301,13 +301,13 @@
     
     string GetFormAnswer(FormBuilder.Web.ViewModels.Template.FormViewModel form, FormBuilder.Web.ViewModels.Template.QuestionViewModel question)
     {
-        // ✅ DOĞRU: DisplayAnswers'dan question key ile al
+        // DisplayAnswers'dan question key ile al
         if (form.DisplayAnswers != null && form.DisplayAnswers.ContainsKey(question.Question))
         {
             var answer = form.DisplayAnswers[question.Question];
             if (!string.IsNullOrEmpty(answer))
             {
-                // Uzun cevapları kısalt
+                
                 if (answer.Length > 30)
                     return answer.Substring(0, 30) + "...";
                 return answer;

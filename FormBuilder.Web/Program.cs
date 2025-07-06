@@ -49,6 +49,9 @@ try
         options.UseNpgsql(connectionString ?? throw new InvalidOperationException("Connection string not found")));
     builder.Services.AddScoped<ITemplateService, TemplateService>();
 
+    builder.Services.AddMemoryCache();
+    builder.Services.AddScoped<ISearchService, SearchService>();
+
     // Add UnitOfWork
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 

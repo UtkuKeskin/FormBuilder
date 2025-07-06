@@ -1,0 +1,374 @@
+@model FormBuilder.Web.ViewModels.Search.SearchResultsViewModel
+@{
+    ViewData["Title"] = string.IsNullOrEmpty(Model.Query) ? "Search" : $"Search Results for '{Model.Query}'";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Search Results -->
+        <div class="col-lg-9">
+            @if (!string.IsNullOrEmpty(Model.Query))
+            {
+                <div class="mb-3">
+                    <h4>
+                        @Model.TotalResults result@(Model.TotalResults != 1 ? "s" : "") 
+                        for "<strong>@Model.Query</strong>"
+                    </h4>
+                </div>
+            }
+
+            @if (Model.Results.Any())
+            {
+                <!-- Sort Options -->
+                <div class="d-flex justify-content-end mb-3">
+                    <select class="form-select" style="width: auto;" onchange="changeSort(this.value)">
+                        <option value="relevance" selected="@(Model.SortBy == "relevance")">
+                            Most Relevant
+                        </option>
+                        <option value="date" selected="@(Model.SortBy == "date")">
+                            Newest First
+                        </option>
+                        <option value="popular" selected="@(Model.SortBy == "popular")">
+                            Most Popular
+                        </option>
+                        <option value="title" selected="@(Model.SortBy == "title")">
+                            Title (A-Z)
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Results List -->
+                @foreach (var item in Model.Results)
+                {
+                    <div class="card mb-3 search-result-item">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-2">
+                                        <a asp-controller="Template" 
+                                           asp-action="Details" 
+                                           asp-route-id="@item.Id"
+                                           class="text-decoration-none">
+                                            @Html.Raw(item.Title)
+                                        </a>
+                                    </h5>
+                                    
+                                    <p class="card-text text-muted">
+                                        @Html.Raw(item.Description)
+                                    </p>
+                                    
+                                    <div class="d-flex flex-wrap align-items-center gap-3 small">
+                                        <span>
+                                            <i class="fas fa-user"></i> @item.AuthorName
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-tag"></i> @item.TopicName
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-file-alt"></i> @item.FormCount responses
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-heart"></i> @item.LikeCount likes
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-calendar"></i> 
+                                            @item.CreatedAt.ToString("MMM dd, yyyy")
+                                        </span>
+                                    </div>
+                                    
+                                    @if (item.Tags.Any())
+                                    {
+                                        <div class="mt-2">
+                                            @foreach (var tag in item.Tags)
+                                            {
+                                                <span class="badge bg-secondary me-1">@tag</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                
+                                @if (!item.IsPublic)
+                                {
+                                    <span class="badge bg-warning">Private</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                <a class="page-link" 
+                                   href="@CreatePageUrl(Model.CurrentPage - 1)">
+                                    Previous
+                                </a>
+                            </li>
+                            
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@CreatePageUrl(i)">@i</a>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                <a class="page-link" 
+                                   href="@CreatePageUrl(Model.CurrentPage + 1)">
+                                    Next
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+            else if (!string.IsNullOrEmpty(Model.Query))
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    No results found for "<strong>@Model.Query</strong>".
+                    Try different keywords or check your spelling.
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>Start searching for templates</h5>
+                    <p class="text-muted">
+                        Enter keywords in the search box to find templates.
+                    </p>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Filters</h6>
+                </div>
+                <div class="card-body">
+                    <h6>Topic</h6>
+                    <div class="list-group list-group-flush">
+                        <a href="@CreateFilterUrl(null)" 
+                           class="list-group-item list-group-item-action @(Model.TopicFilter == null ? "active" : "")">
+                            All Topics
+                        </a>
+                        @if (ViewBag.Topics != null)
+                        {
+                            @foreach (var topic in ViewBag.Topics as List<FormBuilder.Core.Entities.Topic>)
+                            {
+                                <a href="@CreateFilterUrl(topic.Id)" 
+                                   class="list-group-item list-group-item-action @(Model.TopicFilter == topic.Id ? "active" : "")">
+                                    @topic.Name
+                                </a>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Filters Card -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Filters</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Time Range -->
+                    <h6 class="small text-muted mb-2">Created</h6>
+                    <div class="list-group list-group-flush mb-3">
+                        <a href="@CreateQuickFilterUrl("time", "today")" 
+                           class="list-group-item list-group-item-action small py-2">
+                            Today
+                        </a>
+                        <a href="@CreateQuickFilterUrl("time", "week")" 
+                           class="list-group-item list-group-item-action small py-2">
+                            This Week
+                        </a>
+                        <a href="@CreateQuickFilterUrl("time", "month")" 
+                           class="list-group-item list-group-item-action small py-2">
+                            This Month
+                        </a>
+                    </div>
+                    
+                    <!-- Response Count -->
+                    <h6 class="small text-muted mb-2">Responses</h6>
+                    <div class="list-group list-group-flush">
+                        <a href="@CreateQuickFilterUrl("responses", "none")" 
+                           class="list-group-item list-group-item-action small py-2">
+                            <i class="fas fa-inbox"></i> No Responses Yet
+                        </a>
+                        <a href="@CreateQuickFilterUrl("responses", "popular")" 
+                           class="list-group-item list-group-item-action small py-2">
+                            <i class="fas fa-fire"></i> Popular (10+ responses)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Tags Card -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Popular Tags</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var tag in GetPopularTags())
+                        {
+                            <a href="@CreateTagFilterUrl(tag)" 
+                               class="badge bg-secondary text-decoration-none">
+                                @tag
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Tips -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Search Tips</h6>
+                </div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li>Use specific keywords</li>
+                        <li>Search includes titles, descriptions, and questions</li>
+                        <li>Filter by topic for better results</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string CreatePageUrl(int page)
+    {
+        var query = new Dictionary<string, string>
+        {
+            ["q"] = Model.Query,
+            ["page"] = page.ToString()
+        };
+        
+        if (!string.IsNullOrEmpty(Model.SortBy) && Model.SortBy != "relevance")
+            query["sort"] = Model.SortBy;
+            
+        if (Model.TopicFilter.HasValue)
+            query["topic"] = Model.TopicFilter.Value.ToString();
+            
+        if (!string.IsNullOrEmpty(Model.TimeFilter))
+            query["time"] = Model.TimeFilter;
+            
+        if (!string.IsNullOrEmpty(Model.ResponseFilter))
+            query["responses"] = Model.ResponseFilter;
+            
+        return $"{Url.Action("Results")}?{string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"))}";
+    }
+    
+    string CreateFilterUrl(int? topicId)
+    {
+        var query = new Dictionary<string, string>
+        {
+            ["q"] = Model.Query
+        };
+        
+        if (topicId.HasValue)
+            query["topic"] = topicId.Value.ToString();
+            
+        if (!string.IsNullOrEmpty(Model.SortBy) && Model.SortBy != "relevance")
+            query["sort"] = Model.SortBy;
+            
+        if (!string.IsNullOrEmpty(Model.TimeFilter))
+            query["time"] = Model.TimeFilter;
+            
+        if (!string.IsNullOrEmpty(Model.ResponseFilter))
+            query["responses"] = Model.ResponseFilter;
+            
+        return $"{Url.Action("Results")}?{string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"))}";
+    }
+    
+    string CreateQuickFilterUrl(string filterType, string filterValue)
+    {
+        var query = new Dictionary<string, string>
+        {
+            ["q"] = Model.Query
+        };
+        
+        // Keep existing filters
+        if (Model.TopicFilter.HasValue)
+            query["topic"] = Model.TopicFilter.Value.ToString();
+            
+        if (!string.IsNullOrEmpty(Model.SortBy) && Model.SortBy != "relevance")
+            query["sort"] = Model.SortBy;
+        
+        // Add/update the specific filter
+        if (filterType == "time")
+        {
+            if (!string.IsNullOrEmpty(filterValue))
+                query["time"] = filterValue;
+        }
+        else if (filterType == "responses")
+        {
+            if (!string.IsNullOrEmpty(filterValue))
+                query["responses"] = filterValue;
+        }
+        
+        // Reset to page 1 when filtering
+        query["page"] = "1";
+        
+        return $"{Url.Action("Results")}?{string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"))}";
+    }
+    
+    string CreateTagFilterUrl(string tag)
+    {
+        var query = new Dictionary<string, string>
+        {
+            ["q"] = $"{Model.Query} [{tag}]".Trim()
+        };
+        
+        return $"{Url.Action("Results")}?{string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"))}";
+    }
+    
+    List<string> GetPopularTags()
+    {
+        // This should come from the search results
+        var allTags = Model.Results.SelectMany(r => r.Tags).ToList();
+        return allTags.GroupBy(t => t)
+            .OrderByDescending(g => g.Count())
+            .Take(10)
+            .Select(g => g.Key)
+            .ToList();
+    }
+}
+
+@section Scripts {
+    <script>
+        function changeSort(sortBy) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('sort', sortBy);
+            params.set('page', '1');
+            window.location.href = '@Url.Action("Results")?' + params.toString();
+        }
+    </script>
+    
+    <style>
+        .search-result-item {
+            transition: transform 0.2s;
+        }
+        
+        .search-result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        mark {
+            background-color: #fff3cd;
+            padding: 0.1em 0.2em;
+            font-weight: 500;
+        }
+    </style>
+}
