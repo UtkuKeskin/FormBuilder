@@ -513,3 +513,36 @@ mark {
 .search-form + .btn-link {
     margin-left: 0.5rem;
 }
+
+/* Tag Styles */
+.tag-display {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    margin: 0.25rem;
+    background-color: #e9ecef;
+    color: #495057;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.tag-display:hover {
+    background-color: #dee2e6;
+    text-decoration: none;
+    color: #495057;
+}
+
+/* Select2 Bootstrap 5 Theme Override */
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+    color: #fff;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: #fff;
+    background-color: transparent;
+}
