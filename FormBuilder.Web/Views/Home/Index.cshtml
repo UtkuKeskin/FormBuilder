@@ -3,8 +3,45 @@
 @inject IStringLocalizer<SharedResource> Localizer
 @{
     ViewData["Title"] = "Home Page";
+    var tagCloudData = ViewBag.TagCloudData as Dictionary<string, int> ?? new Dictionary<string, int>();
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-   </div>
+    <p class="lead">Create custom forms, surveys, and questionnaires with ease</p>
+    
+    <!-- Action Buttons -->
+    <div class="mb-5">
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-controller="Template" asp-action="Create" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Create New Template
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">
+                <i class="fas fa-user-plus"></i> Get Started
+            </a>
+            <a asp-controller="Template" asp-action="Index" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-eye"></i> Browse Templates
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Popular Tags Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags"></i> Popular Tags
+                </h5>
+            </div>
+            <div class="card-body">
+                <partial name="_TagCloud" model="tagCloudData" />
+            </div>
+        </div>
+    </div>
+</div>

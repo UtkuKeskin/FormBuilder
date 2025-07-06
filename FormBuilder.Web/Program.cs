@@ -58,6 +58,9 @@ try
     // Add CloudinaryService
     builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
+    // Add TagService
+    builder.Services.AddScoped<ITagService, TagService>();
+
     // Add AutoMapper
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

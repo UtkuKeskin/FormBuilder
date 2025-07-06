@@ -10,11 +10,16 @@ namespace FormBuilder.Web.Controllers
     public class ApiController : Controller
     {
         private readonly ITemplateService _templateService;
+        private readonly ITagService _tagService;
         private readonly ILogger<ApiController> _logger;
 
-        public ApiController(ITemplateService templateService, ILogger<ApiController> logger)
+        public ApiController(
+            ITemplateService templateService, 
+            ITagService tagService,
+            ILogger<ApiController> logger)
         {
             _templateService = templateService;
+            _tagService = tagService;
             _logger = logger;
         }
 
@@ -47,6 +52,22 @@ namespace FormBuilder.Web.Controllers
             }
 
             return Ok(new { deletedCount, message = $"{deletedCount} templates deleted successfully" });
+        }
+
+        [HttpGet("tags/suggestions")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTagSuggestions(string q)
+        {
+            var suggestions = await _tagService.GetTagSuggestionsAsync(q);
+            return Json(suggestions);
+        }
+
+        [HttpGet("tags/cloud")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTagCloudData()
+        {
+            var tagData = await _tagService.GetTagCloudDataAsync();
+            return Json(tagData);
         }
     }
 

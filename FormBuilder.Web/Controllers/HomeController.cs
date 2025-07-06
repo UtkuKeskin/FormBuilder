@@ -1,20 +1,29 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using FormBuilder.Web.Models;
+using FormBuilder.Core.Interfaces;
 
 namespace FormBuilder.Web.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly ITagService _tagService;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(
+        ILogger<HomeController> logger,
+        ITagService tagService)
     {
         _logger = logger;
+        _tagService = tagService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        //  Tag cloud data add
+        var tagCloudData = await _tagService.GetTagCloudDataAsync(15);
+        ViewBag.TagCloudData = tagCloudData;
+        
         return View();
     }
 
@@ -41,6 +50,4 @@ public class HomeController : Controller
         Response.StatusCode = 404;
         return View("NotFound");
     }
-    
 }
-
