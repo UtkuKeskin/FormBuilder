@@ -1,0 +1,146 @@
+@model FormBuilder.Web.ViewModels.Admin.AdminTemplatesViewModel
+@{
+    ViewData["Title"] = "Template Overview";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-file-alt"></i> Template Overview
+        </h1>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search templates..." 
+                           value="@Model.SearchTerm">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Templates Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Topic</th>
+                            <th>Visibility</th>
+                            <th>Forms</th>
+                            <th>Likes</th>
+                            <th>Created</th>
+                            <th style="width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var template in Model.Templates)
+                        {
+                            <tr>
+                                <td>#@template.Id</td>
+                                <td>
+                                    <strong>@template.Title</strong>
+                                </td>
+                                <td>
+                                    <small>@template.AuthorEmail</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@template.TopicName</span>
+                                </td>
+                                <td>
+                                    @if (template.IsPublic)
+                                    {
+                                        <span class="badge bg-success">Public</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Private</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">@template.FormCount</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">@template.LikeCount</span>
+                                </td>
+                                <td>@template.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="@Url.Action("Details", "Template", new { id = template.Id })" 
+                                           class="btn btn-outline-info" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="@Url.Action("EditTemplate", new { id = template.Id })" 
+                                           class="btn btn-outline-primary" title="Edit as Admin">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form asp-controller="Template" asp-action="Delete" 
+                                              asp-route-id="@template.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger" 
+                                                    title="Delete"
+                                                    onclick="return confirm('Delete this template?');">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(Model.CurrentPage - 1)&search=@Model.SearchTerm">
+                                Previous
+                            </a>
+                        </li>
+                        
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="?page=@i&search=@Model.SearchTerm">@i</a>
+                            </li>
+                        }
+                        
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(Model.CurrentPage + 1)&search=@Model.SearchTerm">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle"></i>
+        <strong>Admin Note:</strong> As an admin, you can edit any template as if you were the owner.
+        Click the <i class="fas fa-edit"></i> button to edit any template.
+    </div>
+</div>

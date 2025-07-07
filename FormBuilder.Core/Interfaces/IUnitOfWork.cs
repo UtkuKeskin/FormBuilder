@@ -13,6 +13,7 @@ namespace FormBuilder.Core.Interfaces
 
         IRepository<TemplateTag> TemplateTags { get; }
         IRepository<TemplateAccess> TemplateAccesses { get; }
+        IRepository<User> Users { get; } 
         
 
         Task<int> SaveChangesAsync();

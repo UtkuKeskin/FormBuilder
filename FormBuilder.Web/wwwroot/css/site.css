@@ -546,3 +546,41 @@ mark {
     color: #fff;
     background-color: transparent;
 }
+
+/* Admin Panel Styles */
+.bg-primary-dark { 
+    background-color: #0056b3 !important; 
+}
+
+.bg-success-dark { 
+    background-color: #1e7e34 !important; 
+}
+
+.admin-stat-card {
+    transition: transform 0.2s;
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Admin Tables */
+.admin-action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* No inline buttons - using button groups */
+.btn-group-sm > .btn {
+    padding: 0.375rem 0.75rem;
+}
+
+/* Admin warning for self-removal */
+.admin-self-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}

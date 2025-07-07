@@ -1,36 +1,246 @@
+@model FormBuilder.Web.ViewModels.Admin.DashboardViewModel
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<div class="container mt-4">
-    <h1>Admin Dashboard</h1>
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="card">
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">
+        <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+    </h1>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
                 <div class="card-body">
-                    <h5 class="card-title">User Management</h5>
-                    <p class="card-text">Manage users, roles and permissions</p>
-                    <a href="#" class="btn btn-primary">Manage Users</a>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Users</h6>
+                            <h2 class="mb-0">@Model.TotalUsers</h2>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-primary-dark">
+                    <a href="@Url.Action("Users")" class="text-white text-decoration-none">
+                        View Details <i class="fas fa-arrow-circle-right"></i>
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
                 <div class="card-body">
-                    <h5 class="card-title">Template Overview</h5>
-                    <p class="card-text">View and manage all templates</p>
-                    <a href="#" class="btn btn-primary">View Templates</a>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Templates</h6>
+                            <h2 class="mb-0">@Model.TotalTemplates</h2>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-success-dark">
+                    <a href="@Url.Action("Templates")" class="text-white text-decoration-none">
+                        View All <i class="fas fa-arrow-circle-right"></i>
+                    </a>
                 </div>
             </div>
         </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Forms Filled</h6>
+                            <h2 class="mb-0">@Model.TotalForms</h2>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Admins</h6>
+                            <h2 class="mb-0">@Model.TotalAdmins</h2>
+                        </div>
+                        <div class="fs-1">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Chart -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Form Submissions (Last 7 Days)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="activityChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div class="col-md-4">
             <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Quick Actions
+                    </h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">System Stats</h5>
-                    <p class="card-text">View system statistics</p>
-                    <a href="#" class="btn btn-primary">View Stats</a>
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Users")" class="btn btn-primary">
+                            <i class="fas fa-users"></i> Manage Users
+                        </a>
+                        <a href="@Url.Action("Templates")" class="btn btn-success">
+                            <i class="fas fa-file-alt"></i> View All Templates
+                        </a>
+                        <a href="@Url.Action("Create", "Template")" class="btn btn-info">
+                            <i class="fas fa-plus"></i> Create Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Tables -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt"></i> Recent Templates
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var template in Model.RecentTemplates)
+                                {
+                                    <tr>
+                                        <td>@template.Title</td>
+                                        <td>@template.User.Email</td>
+                                        <td>@template.CreatedAt.ToString("MMM dd")</td>
+                                        <td>
+                                            <a href="@Url.Action("EditTemplate", new { id = template.Id })" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> Recent Form Submissions
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Template</th>
+                                    <th>User</th>
+                                    <th>Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var form in Model.RecentForms)
+                                {
+                                    <tr>
+                                        <td>@form.Template.Title</td>
+                                        <td>@form.User.Email</td>
+                                        <td>@form.FilledAt.ToString("MMM dd HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Activity Chart
+        const ctx = document.getElementById('activityChart');
+        if (ctx) {
+            const dailyStats = @Html.Raw(Json.Serialize(Model.DailyStats));
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailyStats.map(s => new Date(s.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Forms Submitted',
+                        data: dailyStats.map(s => s.formCount),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+    <style>
+        .bg-primary-dark { background-color: #0056b3; }
+        .bg-success-dark { background-color: #1e7e34; }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); }
+    </style>
+}
