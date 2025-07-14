@@ -50,4 +50,5 @@ appsettings.json
 # User-uploaded files
 wwwroot/uploads/
 
-.notes/
+.notes/FormBuilder.Web/appsettings.json
+FormBuilder.Web/appsettings.json
