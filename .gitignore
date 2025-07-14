@@ -45,6 +45,7 @@ _ReSharper*/
 appsettings.Development.json
 appsettings.Production.json
 *.Development.json
+appsettings.json
 
 # User-uploaded files
 wwwroot/uploads/
