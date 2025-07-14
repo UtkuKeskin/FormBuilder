@@ -130,11 +130,11 @@ namespace FormBuilder.Web.Controllers
         // GET: /Admin/EditTemplate/{id}
         public async Task<IActionResult> EditTemplate(int id)
         {
-            // MENTOR NOTE: Admin sees all as owner
+            // Admin sees all as owner
             return RedirectToAction("Edit", "Template", new { id });
         }
 
-        // Private helper methods - SMALL METHODS
+        // Private helper methods -
         private async Task<DashboardViewModel> GetDashboardDataAsync()
         {
             var totalUsers = await _userManager.Users.CountAsync();

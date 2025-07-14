@@ -1,0 +1,233 @@
+@model FormBuilder.Web.ViewModels.Salesforce.SalesforceIntegrationViewModel
+@{
+    ViewData["Title"] = "Export to Salesforce";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cloud-upload-alt"></i> Export to Salesforce
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.IsIntegrated)
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            This profile was already exported to Salesforce on 
+                            <strong>@Model.LastSyncDate?.ToString("dd MMM yyyy HH:mm")</strong>
+                        </div>
+                    }
+
+                    <form asp-action="CreateSalesforceRecord" method="post" id="salesforceForm">
+                        <input asp-for="UserId" type="hidden" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Company Information Accordion -->
+                        <div class="accordion mb-3" id="integrationAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#companyInfo" aria-expanded="true">
+                                        <i class="fas fa-building me-2"></i> Company Information
+                                    </button>
+                                </h2>
+                                <div id="companyInfo" class="accordion-collapse collapse show" 
+                                     data-bs-parent="#integrationAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="CompanyName" class="form-label required"></label>
+                                                <input asp-for="CompanyName" class="form-control" />
+                                                <span asp-validation-for="CompanyName" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="Industry" class="form-label"></label>
+                                                <select asp-for="Industry" class="form-select">
+                                                    <option value="">-- Select Industry --</option>
+                                                    <option value="Technology">Technology</option>
+                                                    <option value="Healthcare">Healthcare</option>
+                                                    <option value="Finance">Finance</option>
+                                                    <option value="Education">Education</option>
+                                                    <option value="Retail">Retail</option>
+                                                    <option value="Manufacturing">Manufacturing</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="AnnualRevenue" class="form-label"></label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">$</span>
+                                                    <input asp-for="AnnualRevenue" class="form-control" type="number" />
+                                                </div>
+                                                <span asp-validation-for="AnnualRevenue" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="NumberOfEmployees" class="form-label"></label>
+                                                <input asp-for="NumberOfEmployees" class="form-control" type="number" />
+                                                <span asp-validation-for="NumberOfEmployees" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="CompanyPhone" class="form-label"></label>
+                                                <input asp-for="CompanyPhone" class="form-control" placeholder="+1 234 567 8900" />
+                                                <span asp-validation-for="CompanyPhone" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Information -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#contactInfo" aria-expanded="false">
+                                        <i class="fas fa-user me-2"></i> Contact Information
+                                    </button>
+                                </h2>
+                                <div id="contactInfo" class="accordion-collapse collapse" 
+                                     data-bs-parent="#integrationAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="FirstName" class="form-label required"></label>
+                                                <input asp-for="FirstName" class="form-control" />
+                                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="LastName" class="form-label required"></label>
+                                                <input asp-for="LastName" class="form-control" />
+                                                <span asp-validation-for="LastName" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="Email" class="form-label"></label>
+                                                <input asp-for="Email" class="form-control" readonly />
+                                                <small class="text-muted">Email cannot be changed</small>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="Phone" class="form-label"></label>
+                                                <input asp-for="Phone" class="form-control" placeholder="+1 234 567 8900" />
+                                                <span asp-validation-for="Phone" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="Title" class="form-label"></label>
+                                                <input asp-for="Title" class="form-control" placeholder="e.g., Manager" />
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="Department" class="form-label"></label>
+                                                <input asp-for="Department" class="form-control" placeholder="e.g., Sales" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Information -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#addressInfo" aria-expanded="false">
+                                        <i class="fas fa-map-marker-alt me-2"></i> Address Information
+                                    </button>
+                                </h2>
+                                <div id="addressInfo" class="accordion-collapse collapse" 
+                                     data-bs-parent="#integrationAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label asp-for="Street" class="form-label"></label>
+                                            <input asp-for="Street" class="form-control" />
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="City" class="form-label"></label>
+                                                <input asp-for="City" class="form-control" />
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="State" class="form-label"></label>
+                                                <select asp-for="State" class="form-select">
+                                                    <option value="">-- Optional --</option>
+                                                    @foreach (var state in FormBuilder.Web.ViewModels.Salesforce.SalesforceIntegrationViewModel.USStates)
+                                                    {
+                                                        <option value="@state.Key">@state.Value</option>
+                                                    }
+                                                </select>
+                                                <span asp-validation-for="State" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="PostalCode" class="form-label"></label>
+                                                <input asp-for="PostalCode" class="form-control" placeholder="12345" />
+                                                <span asp-validation-for="PostalCode" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="Country" class="form-label"></label>
+                                                <input asp-for="Country" class="form-control" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Profile
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-cloud-upload-alt"></i> 
+                                @(Model.IsIntegrated ? "Update in Salesforce" : "Export to Salesforce")
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (ViewBag.CorrelationId != null)
+            {
+                <div class="mt-2 text-center">
+                    <small class="text-muted">Reference ID: @ViewBag.CorrelationId</small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Exporting to Salesforce...</h5>
+                <p class="text-muted mb-0">Please wait while we create your records.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/modules/salesforce-integration.js"></script>
+}
+
+<style>
+    .required::after {
+        content: " *";
+        color: red;
+    }
+</style>

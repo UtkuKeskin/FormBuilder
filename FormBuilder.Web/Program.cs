@@ -13,6 +13,7 @@ using FormBuilder.Web.Resources;
 using Microsoft.Extensions.Localization;
 using FormBuilder.Infrastructure.Services;
 using FormBuilder.Web.Profiles;
+using FormBuilder.Core.Models;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -61,9 +62,33 @@ try
     // Add TagService
     builder.Services.AddScoped<ITagService, TagService>();
 
+    // Salesforce configuration
+    builder.Services.Configure<SalesforceConfig>(options =>
+    {
+        options.LoginUrl = Environment.GetEnvironmentVariable("SALESFORCE_LOGIN_URL") 
+            ?? builder.Configuration["Salesforce:LoginUrl"];
+        options.ClientId = Environment.GetEnvironmentVariable("SALESFORCE_CLIENT_ID") 
+            ?? builder.Configuration["Salesforce:ClientId"];
+        options.ClientSecret = Environment.GetEnvironmentVariable("SALESFORCE_CLIENT_SECRET") 
+            ?? builder.Configuration["Salesforce:ClientSecret"];
+        options.Username = Environment.GetEnvironmentVariable("SALESFORCE_USERNAME") 
+            ?? builder.Configuration["Salesforce:Username"];
+        options.Password = Environment.GetEnvironmentVariable("SALESFORCE_PASSWORD") 
+            ?? builder.Configuration["Salesforce:Password"];
+        options.SecurityToken = Environment.GetEnvironmentVariable("SALESFORCE_SECURITY_TOKEN") 
+            ?? builder.Configuration["Salesforce:SecurityToken"];
+        options.ApiVersion = Environment.GetEnvironmentVariable("SALESFORCE_API_VERSION") 
+            ?? builder.Configuration["Salesforce:ApiVersion"] ?? "v59.0";
+    });
+
+    // Register Salesforce service
+    builder.Services.AddScoped<ISalesforceService, SalesforceService>();
+
+    // Add HttpClient for Salesforce
+    builder.Services.AddHttpClient<ISalesforceService, SalesforceService>();
+
     // Add AutoMapper
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
 
     // Add Identity
     builder.Services.AddDefaultIdentity<User>(options => {
@@ -141,7 +166,6 @@ builder.Services.AddControllersWithViews()
         var factory = provider.GetRequiredService<IStringLocalizerFactory>();
         return factory.Create(typeof(SharedResource));
     }); 
-// üstü değiştirdik. 
 // Add Authorization policies
     builder.Services.AddAuthorization(options =>
 {
@@ -232,7 +256,6 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         // Continue running even if admin password update fails
     }
 
-    //
 
 app.Run();
 }

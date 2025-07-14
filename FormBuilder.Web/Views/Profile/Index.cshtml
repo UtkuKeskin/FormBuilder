@@ -74,3 +74,71 @@
         </div>
     </div>
 </div>
+<!-- Salesforce Integration Section -->
+@if (!Model.IsAdmin || User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.Id)
+{
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-cloud"></i> Salesforce Integration
+            </h5>
+        </div>
+        <div class="card-body">
+            <div id="salesforceStatus">
+                <div class="text-center">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="ms-2">Checking status...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Check Salesforce integration status
+        document.addEventListener('DOMContentLoaded', function() {
+            const userId = '@Model.Id';
+            fetch(`/Profile/SalesforceStatus?userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = document.getElementById('salesforceStatus');
+                    if (data.isIntegrated) {
+                        statusDiv.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-success me-2">
+                                        <i class="fas fa-check-circle"></i> Integrated
+                                    </span>
+                                    <small class="text-muted">
+                                        Last sync: ${new Date(data.lastSyncDate).toLocaleDateString()}
+                                    </small>
+                                </div>
+                                <a href="/Profile/SalesforceIntegration?userId=${userId}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-sync"></i> Update
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="text-center">
+                                <p class="mb-3">Export your profile to Salesforce CRM</p>
+                                <a href="/Profile/SalesforceIntegration?userId=${userId}" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-cloud-upload-alt"></i> Export to Salesforce
+                                </a>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking Salesforce status:', error);
+                    document.getElementById('salesforceStatus').innerHTML = 
+                        '<div class="alert alert-danger">Failed to check integration status</div>';
+                });
+        });
+    </script>
+}
