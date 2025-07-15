@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Tree View -->
+        <record id="view_formbuilder_template_tree" model="ir.ui.view">
+            <field name="name">formbuilder.template.tree</field>
+            <field name="model">formbuilder.template</field>
+            <field name="arch" type="xml">
+                <tree string="FormBuilder Templates">
+                    <field name="external_id" string="ID"/>
+                    <field name="name"/>
+                    <field name="author"/>
+                    <field name="question_count" string="Questions"/>
+                    <field name="total_responses" string="Responses"/>
+                    <field name="last_sync" widget="datetime"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_formbuilder_template_form" model="ir.ui.view">
+            <field name="name">formbuilder.template.form</field>
+            <field name="model">formbuilder.template</field>
+            <field name="arch" type="xml">
+                <form string="FormBuilder Template">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_questions" type="object" class="oe_stat_button" icon="fa-question-circle">
+                                <field name="question_count" widget="statinfo" string="Questions"/>
+                            </button>
+                        </div>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Template Name"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="external_id" readonly="1"/>
+                                <field name="author"/>
+                                <field name="total_responses" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="api_url" readonly="1"/>
+                                <field name="last_sync" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Questions" name="questions">
+                                <field name="question_ids" readonly="1">
+                                    <tree decoration-info="type == 'checkbox'" decoration-success="type == 'text'" decoration-warning="type == 'integer'" decoration-primary="type == 'string'">
+                                        <field name="text"/>
+                                        <field name="type"/>
+                                        <field name="answer_count"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="view_formbuilder_template_search" model="ir.ui.view">
+            <field name="name">formbuilder.template.search</field>
+            <field name="model">formbuilder.template</field>
+            <field name="arch" type="xml">
+                <search string="Search Templates">
+                    <field name="name"/>
+                    <field name="author"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Author" name="group_author" context="{'group_by': 'author'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Kanban View -->
+        <record id="view_formbuilder_template_kanban" model="ir.ui.view">
+            <field name="name">formbuilder.template.kanban</field>
+            <field name="model">formbuilder.template</field>
+            <field name="arch" type="xml">
+                <kanban>
+                    <field name="name"/>
+                    <field name="author"/>
+                    <field name="question_count"/>
+                    <field name="total_responses"/>
+                    <field name="last_sync"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click formbuilder-template-card">
+                                <div class="oe_kanban_content">
+                                    <strong><field name="name"/></strong>
+                                    <div class="text-muted">
+                                        <i class="fa fa-user"/> <field name="author"/>
+                                    </div>
+                                    <div class="mt8">
+                                        <span class="formbuilder-stat-badge">
+                                            <i class="fa fa-question-circle"/> <field name="question_count"/> Questions
+                                        </span>
+                                        <span class="formbuilder-stat-badge">
+                                            <i class="fa fa-check-square"/> <field name="total_responses"/> Responses
+                                        </span>
+                                    </div>
+                                    <div class="mt8 text-muted">
+                                        <small>
+                                            <t t-if="last_sync">
+                                                Last sync: <field name="last_sync" widget="datetime"/>
+                                            </t>
+                                            <t t-else="">
+                                                Never synced
+                                            </t>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_formbuilder_template" model="ir.actions.act_window">
+            <field name="name">Templates</field>
+            <field name="res_model">formbuilder.template</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="search_view_id" ref="view_formbuilder_template_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No templates imported yet
+                </p>
+                <p>
+                    Click on "Import from API" in the menu to import templates from FormBuilder.
+                </p>
+            </field>
+        </record>
+
+        <!-- Question Views -->
+        <record id="view_formbuilder_question_tree" model="ir.ui.view">
+            <field name="name">formbuilder.question.tree</field>
+            <field name="model">formbuilder.question</field>
+            <field name="arch" type="xml">
+                <tree string="Questions" decoration-info="type == 'checkbox'" decoration-success="type == 'text'" decoration-warning="type == 'integer'" decoration-primary="type == 'string'">
+                    <field name="template_id"/>
+                    <field name="text"/>
+                    <field name="type"/>
+                    <field name="answer_count"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_formbuilder_question_form" model="ir.ui.view">
+            <field name="name">formbuilder.question.form</field>
+            <field name="model">formbuilder.question</field>
+            <field name="arch" type="xml">
+                <form string="Question">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="template_id" readonly="1"/>
+                                <field name="text" readonly="1"/>
+                                <field name="type" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="answer_count" readonly="1"/>
+                            </group>
+                        </group>
+                        <separator string="Aggregation Data"/>
+                        <field name="aggregation_display" readonly="1"/>
+                        <field name="aggregation_data" readonly="1" groups="base.group_no_one"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_formbuilder_question" model="ir.actions.act_window">
+            <field name="name">Questions</field>
+            <field name="res_model">formbuilder.question</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+    </data>
+</odoo>

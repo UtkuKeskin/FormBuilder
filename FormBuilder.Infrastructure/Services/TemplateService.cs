@@ -6,6 +6,7 @@ using FormBuilder.Core.Entities;
 using FormBuilder.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using FormBuilder.Infrastructure.Data;
+using FormBuilder.Core.Models.Api;
 
 namespace FormBuilder.Infrastructure.Services
 {
@@ -129,13 +130,10 @@ namespace FormBuilder.Infrastructure.Services
             string tags, 
             List<int> allowedUserIds)
         {
-            // update logic...
             _unitOfWork.Templates.Update(template);
 
-            // Update tags
             await UpdateTagsAsync(template, tags);
 
-            // Update access control
             await UpdateAccessControlAsync(template, allowedUserIds);
 
             await _unitOfWork.SaveAsync();
@@ -192,6 +190,224 @@ namespace FormBuilder.Infrastructure.Services
         public async Task<List<Topic>> GetTopicsAsync()
         {
             return await _unitOfWork.Topics.GetAll().ToListAsync();
+        }
+        public async Task<TemplateAggregateResponse> GetTemplateAggregatesAsync(string userId)
+        {
+            // Batch load with includes for better performance
+            var templates = await _unitOfWork.Templates
+                .GetQueryable()
+                .Where(t => t.UserId == userId)
+                .Include(t => t.Forms)
+                .Include(t => t.User)
+                .AsNoTracking() // Performance optimization
+                .ToListAsync();
+
+            var response = new TemplateAggregateResponse
+            {
+                Templates = new List<TemplateAggregate>()
+            };
+
+            // Process templates in parallel for better performance
+            var aggregateTasks = templates.Select(async template =>
+            {
+                return await Task.Run(() => ProcessTemplateAggregate(template));
+            });
+
+            var aggregates = await Task.WhenAll(aggregateTasks);
+            response.Templates.AddRange(aggregates.Where(a => a != null));
+
+            return response;
+        }
+
+        // Refactor the processing logic into a separate method
+        private TemplateAggregate ProcessTemplateAggregate(Template template)
+        {
+            var aggregate = new TemplateAggregate
+            {
+                Id = template.Id,
+                Title = template.Title,
+                Author = template.User?.Email ?? template.UserId,
+                Questions = new List<QuestionAggregate>()
+            };
+
+            // Process all question types
+            ProcessQuestionType(template, aggregate, "String", 4);
+            ProcessQuestionType(template, aggregate, "Text", 4);
+            ProcessQuestionType(template, aggregate, "Int", 4);
+            ProcessQuestionType(template, aggregate, "Checkbox", 4);
+
+            return aggregate;
+        }
+
+        private void ProcessQuestionType(Template template, TemplateAggregate aggregate, string type, int count)
+        {
+            for (int i = 1; i <= count; i++)
+            {
+                if (GetQuestionState(template, type, i))
+                {
+                    QuestionAggregate questionAggregate = type switch
+                    {
+                        "String" => CreateStringQuestionAggregate(template, i),
+                        "Text" => CreateTextQuestionAggregate(template, i),
+                        "Int" => CreateIntegerQuestionAggregate(template, i),
+                        "Checkbox" => CreateCheckboxQuestionAggregate(template, i),
+                        _ => null
+                    };
+
+                    if (questionAggregate != null)
+                        aggregate.Questions.Add(questionAggregate);
+                }
+            }
+        }
+
+        // Helper method to check if question is active
+        private bool GetQuestionState(Template template, string type, int number)
+        {
+            var prop = template.GetType().GetProperty($"Custom{type}{number}State");
+            return prop?.GetValue(template) as bool? ?? false;
+        }
+
+        // Helper method to get question text
+        private string GetQuestionText(Template template, string type, int number)
+        {
+            var prop = template.GetType().GetProperty($"Custom{type}{number}Question");
+            return prop?.GetValue(template) as string ?? "";
+        }
+
+        // Create String Question Aggregate
+        private QuestionAggregate CreateStringQuestionAggregate(Template template, int number)
+        {
+            var questionText = GetQuestionText(template, "String", number);
+            if (string.IsNullOrEmpty(questionText)) return null;
+
+            var answers = template.Forms
+                .Select(f => f.GetType().GetProperty($"CustomString{number}Answer")?.GetValue(f) as string)
+                .Where(a => !string.IsNullOrEmpty(a))
+                .ToList();
+
+            var topAnswers = answers
+                .GroupBy(a => a)
+                .OrderByDescending(g => g.Count())
+                .Take(5)
+                .Select(g => $"{g.Key} ({g.Count()})")
+                .ToList();
+
+            return new QuestionAggregate
+            {
+                Text = questionText,
+                Type = "string",
+                AnswerCount = answers.Count,
+                Aggregation = new AggregationData
+                {
+                    TopAnswers = topAnswers
+                }
+            };
+        }
+
+        // Create Text Question Aggregate
+        private QuestionAggregate CreateTextQuestionAggregate(Template template, int number)
+        {
+            var questionText = GetQuestionText(template, "Text", number);
+            if (string.IsNullOrEmpty(questionText)) return null;
+
+            var answers = template.Forms
+                .Select(f => f.GetType().GetProperty($"CustomText{number}Answer")?.GetValue(f) as string)
+                .Where(a => !string.IsNullOrEmpty(a))
+                .ToList();
+
+            // For text, show top common keywords or first few words
+            var topAnswers = answers
+                .SelectMany(a => a.Split(' ').Take(5))
+                .GroupBy(word => word.ToLower())
+                .OrderByDescending(g => g.Count())
+                .Take(10)
+                .Select(g => $"{g.Key} ({g.Count()})")
+                .ToList();
+
+            return new QuestionAggregate
+            {
+                Text = questionText,
+                Type = "text",
+                AnswerCount = answers.Count,
+                Aggregation = new AggregationData
+                {
+                    TopAnswers = topAnswers
+                }
+            };
+        }
+
+        // Create Integer Question Aggregate
+        private QuestionAggregate CreateIntegerQuestionAggregate(Template template, int number)
+        {
+            var questionText = GetQuestionText(template, "Int", number);
+            if (string.IsNullOrEmpty(questionText)) return null;
+
+            var answers = template.Forms
+                .Select(f => f.GetType().GetProperty($"CustomInt{number}Answer")?.GetValue(f) as int?)
+                .Where(a => a.HasValue)
+                .Select(a => a.Value)
+                .ToList();
+
+            if (!answers.Any()) return new QuestionAggregate
+            {
+                Text = questionText,
+                Type = "integer",
+                AnswerCount = 0,
+                Aggregation = new AggregationData()
+            };
+
+            return new QuestionAggregate
+            {
+                Text = questionText,
+                Type = "integer",
+                AnswerCount = answers.Count,
+                Aggregation = new AggregationData
+                {
+                    Average = Math.Round(answers.Average(), 2),
+                    Min = answers.Min(),
+                    Max = answers.Max()
+                }
+            };
+        }
+
+        // Create Checkbox Question Aggregate
+        private QuestionAggregate CreateCheckboxQuestionAggregate(Template template, int number)
+        {
+            var questionText = GetQuestionText(template, "Checkbox", number);
+            if (string.IsNullOrEmpty(questionText)) return null;
+
+            var answers = template.Forms
+                .Select(f => f.GetType().GetProperty($"CustomCheckbox{number}Answer")?.GetValue(f) as bool?)
+                .Where(a => a.HasValue)
+                .Select(a => a.Value)
+                .ToList();
+
+            if (!answers.Any()) return new QuestionAggregate
+            {
+                Text = questionText,
+                Type = "checkbox",
+                AnswerCount = 0,
+                Aggregation = new AggregationData
+                {
+                    TruePercentage = 0,
+                    FalsePercentage = 0
+                }
+            };
+
+            var trueCount = answers.Count(a => a);
+            var totalCount = answers.Count;
+
+            return new QuestionAggregate
+            {
+                Text = questionText,
+                Type = "checkbox",
+                AnswerCount = totalCount,
+                Aggregation = new AggregationData
+                {
+                    TruePercentage = Math.Round((double)trueCount / totalCount * 100, 2),
+                    FalsePercentage = Math.Round((double)(totalCount - trueCount) / totalCount * 100, 2)
+                }
+            };
         }
 
         //Template Statistics & Aggregation Methods

@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_formbuilder_template_user,formbuilder.template.user,model_formbuilder_template,group_formbuilder_user,1,0,0,0
+access_formbuilder_template_manager,formbuilder.template.manager,model_formbuilder_template,group_formbuilder_manager,1,1,1,1
+access_formbuilder_question_user,formbuilder.question.user,model_formbuilder_question,group_formbuilder_user,1,0,0,0
+access_formbuilder_question_manager,formbuilder.question.manager,model_formbuilder_question,group_formbuilder_manager,1,1,1,1
+access_formbuilder_import_wizard,formbuilder.import.wizard,model_formbuilder_import_wizard,group_formbuilder_user,1,1,1,1

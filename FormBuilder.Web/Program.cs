@@ -14,6 +14,8 @@ using Microsoft.Extensions.Localization;
 using FormBuilder.Infrastructure.Services;
 using FormBuilder.Web.Profiles;
 using FormBuilder.Core.Models;
+using FormBuilder.Infrastructure.Security;
+using AspNetCoreRateLimit;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -87,8 +89,46 @@ try
     // Add HttpClient for Salesforce
     builder.Services.AddHttpClient<ISalesforceService, SalesforceService>();
 
+    // Add ApiKeyService
+    builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+
     // Add AutoMapper
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+    // Add CORS
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("OdooPolicy",
+            builder => builder
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
+    });
+
+    // Rate Limiting Configuration
+    builder.Services.Configure<IpRateLimitOptions>(options =>
+    {
+        options.EnableEndpointRateLimiting = true;
+        options.StackBlockedRequests = false;
+        options.HttpStatusCode = 429;
+        options.RealIpHeader = "X-Real-IP";
+        options.ClientIdHeader = "X-API-Key";
+        options.GeneralRules = new List<RateLimitRule>
+        {
+            new RateLimitRule
+            {
+                Endpoint = "get:/api/v1/*",
+                Period = "1h",
+                Limit = 100,
+            }
+        };
+    });
+
+    builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+    builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+    builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+    builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+    builder.Services.AddInMemoryRateLimiting();
 
     // Add Identity
     builder.Services.AddDefaultIdentity<User>(options => {
@@ -125,6 +165,10 @@ try
             });
     }
 
+    // Add API Key Authentication
+    builder.Services.AddAuthentication()
+        .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+
     // Cookie Configuration
     builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -153,6 +197,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 // MVC configuration
 builder.Services.AddControllersWithViews()
+    .AddApplicationPart(typeof(Program).Assembly) // Explicit assembly reference
     .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
     .AddDataAnnotationsLocalization(options =>
     {
@@ -166,11 +211,30 @@ builder.Services.AddControllersWithViews()
         var factory = provider.GetRequiredService<IStringLocalizerFactory>();
         return factory.Create(typeof(SharedResource));
     }); 
+
+// Add Swagger services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo 
+    { 
+        Title = "FormBuilder API", 
+        Version = "v1" 
+    });
+});
+
 // Add Authorization policies
     builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("AuthenticatedOnly", policy => policy.RequireAuthenticatedUser());
+    
+    // API Key Policy
+    options.AddPolicy("ApiKeyPolicy", policy =>
+    {
+        policy.AuthenticationSchemes.Add("ApiKey");
+        policy.RequireAuthenticatedUser();
+    });
 });
 
     // Health check service
@@ -219,7 +283,14 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         app.UseExceptionHandler("/Home/Error");
     }
 
-    // Static files should be first
+    // Explicit Swagger Configuration
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "FormBuilder API V1");
+    });
+
+    // Static files should be after Swagger
     app.UseStaticFiles();
 
     // Then routing
@@ -227,12 +298,21 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
     app.UseRequestLocalization();
 
+    // Use CORS
+    app.UseCors("OdooPolicy");
+
+    // Use Rate Limiting
+    app.UseIpRateLimiting();
+
     // Then Authentication & Authorization
     app.UseAuthentication();
     app.UseAuthorization();
 
     // Health check endpoint
     app.MapHealthChecks("/health");
+
+    // ADD MAPCONTROLLERS FOR API ROUTING 
+    app.MapControllers();
 
     app.MapControllerRoute(
         name: "default",

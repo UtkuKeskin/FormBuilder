@@ -15,17 +15,21 @@ namespace FormBuilder.Web.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly ISalesforceService _salesforceService;
+        private readonly IApiKeyService _apiKeyService; // ← NEW
         private readonly IMapper _mapper;
         private readonly ILogger<ProfileController> _logger;
 
+        // ← UPDATED CONSTRUCTOR
         public ProfileController(
             UserManager<User> userManager,
             ISalesforceService salesforceService,
+            IApiKeyService apiKeyService, // ← NEW
             IMapper mapper,
             ILogger<ProfileController> logger)
         {
             _userManager = userManager;
             _salesforceService = salesforceService;
+            _apiKeyService = apiKeyService; // ← NEW
             _mapper = mapper;
             _logger = logger;
         }
@@ -127,6 +131,76 @@ namespace FormBuilder.Web.Controllers
             }
 
             return View("Edit");
+        }
+
+        // GET: /Profile/ApiKey
+        [HttpGet]
+        public async Task<IActionResult> ApiKey()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var model = new ApiKeyViewModel
+            {
+                ApiKey = user.ApiKey,
+                GeneratedAt = user.ApiKeyGeneratedAt,
+                LastUsedAt = user.ApiKeyLastUsedAt,
+                IsEnabled = user.ApiKeyEnabled
+            };
+
+            return View(model);
+        }
+
+        // POST: /Profile/GenerateApiKey
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateApiKey()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            // Rate limiting check (simple implementation)
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user.ApiKeyGeneratedAt.HasValue && 
+                user.ApiKeyGeneratedAt.Value > DateTime.UtcNow.AddMinutes(-5))
+            {
+                TempData["Error"] = "Please wait 5 minutes before generating a new API key.";
+                return RedirectToAction(nameof(ApiKey));
+            }
+
+            try
+            {
+                var apiKey = await _apiKeyService.GenerateApiKeyAsync(userId);
+                TempData["Success"] = "API key generated successfully!";
+                TempData["NewApiKey"] = apiKey; // To show once
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating API key for user {UserId}", userId);
+                TempData["Error"] = "Failed to generate API key.";
+            }
+
+            return RedirectToAction(nameof(ApiKey));
+        }
+
+        // POST: /Profile/RevokeApiKey
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RevokeApiKey()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            try
+            {
+                await _apiKeyService.RevokeApiKeyAsync(userId);
+                TempData["Success"] = "API key revoked successfully!";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error revoking API key for user {UserId}", userId);
+                TempData["Error"] = "Failed to revoke API key.";
+            }
+
+            return RedirectToAction(nameof(ApiKey));
         }
 
         // GET: /Profile/SalesforceIntegration
@@ -362,7 +436,6 @@ namespace FormBuilder.Web.Controllers
                 return requestedUserId;
             }
 
-            // User can only access own profile
             if (requestedUserId == currentUserId)
             {
                 return currentUserId;

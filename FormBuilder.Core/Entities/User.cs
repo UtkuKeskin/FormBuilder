@@ -16,11 +16,17 @@ namespace FormBuilder.Core.Entities
         public virtual ICollection<Form> Forms { get; set; }
         public virtual ICollection<Comment> Comments { get; set; }
         public virtual ICollection<Like> Likes { get; set; }
-        
+
         // Salesforce Integration Fields
         public string? SalesforceAccountId { get; set; }
         public string? SalesforceContactId { get; set; }
         public DateTime? LastSalesforceSync { get; set; }
         public bool SalesforceIntegrationEnabled { get; set; } = false;
+        
+        // API Integration Fields
+        public string? ApiKey { get; set; }
+        public DateTime? ApiKeyGeneratedAt { get; set; }
+        public DateTime? ApiKeyLastUsedAt { get; set; }
+        public bool ApiKeyEnabled { get; set; } = true;
     }
 }

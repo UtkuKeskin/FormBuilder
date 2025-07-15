@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Wizard Form View -->
+        <record id="view_formbuilder_import_wizard_form" model="ir.ui.view">
+            <field name="name">formbuilder.import.wizard.form</field>
+            <field name="model">formbuilder.import.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Import from FormBuilder API">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="credentials,preview,done"/>
+                    </header>
+                    <sheet>
+                        <!-- Step 1: API Credentials -->
+                        <group attrs="{'invisible': [('state', '!=', 'credentials')]}">
+                            <h2>Step 1: Enter API Credentials</h2>
+                            <group>
+                                <field name="api_url" placeholder="http://localhost:5175/api/v1/templates/aggregates"/>
+                                <field name="api_key" password="True" placeholder="FB_..." />
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>Note:</strong> You can get your API key from FormBuilder Profile → API Key Management
+                            </div>
+                        </group>
+
+                        <!-- Step 2: Preview Data -->
+                        <group attrs="{'invisible': [('state', '!=', 'preview')]}">
+                            <h2>Step 2: Preview Data</h2>
+                            <group>
+                                <field name="template_count" readonly="1"/>
+                            </group>
+                            <separator string="Data Preview"/>
+                            <field name="preview_data" readonly="1" widget="ace" options="{'mode': 'json'}"/>
+                        </group>
+
+                        <!-- Step 3: Import Complete -->
+                        <group attrs="{'invisible': [('state', '!=', 'done')]}">
+                            <h2>Import Complete!</h2>
+                            <div class="alert alert-success" role="alert">
+                                <strong>Success!</strong> Templates have been imported successfully.
+                            </div>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <!-- Credentials state buttons -->
+                        <button name="action_test_connection" type="object" string="Test Connection" class="btn-primary" attrs="{'invisible': [('state', '!=', 'credentials')]}"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" attrs="{'invisible': [('state', '!=', 'credentials')]}"/>
+                        
+                        <!-- Preview state buttons -->
+                        <button name="action_import" type="object" string="Import" class="btn-primary" attrs="{'invisible': [('state', '!=', 'preview')]}"/>
+                        <button string="Back" class="btn-secondary" special="cancel" attrs="{'invisible': [('state', '!=', 'preview')]}"/>
+                        
+                        <!-- Done state buttons -->
+                        <button name="action_view_templates" type="object" string="View Templates" class="btn-primary" attrs="{'invisible': [('state', '!=', 'done')]}"/>
+                        <button string="Close" class="btn-secondary" special="cancel" attrs="{'invisible': [('state', '!=', 'done')]}"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_formbuilder_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import from FormBuilder</field>
+            <field name="res_model">formbuilder.import.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+    </data>
+</odoo>

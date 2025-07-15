@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_formbuilder_template" model="ir.actions.act_window">
+            <field name="name">Templates</field>
+            <field name="res_model">formbuilder.template</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="action_formbuilder_question" model="ir.actions.act_window">
+            <field name="name">Questions</field>
+            <field name="res_model">formbuilder.question</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="action_formbuilder_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import from FormBuilder</field>
+            <field name="res_model">formbuilder.import.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <!-- Top menu item -->
+        <menuitem id="menu_formbuilder_root"
+                  name="FormBuilder"
+                  sequence="50"/>
+        
+        <!-- Templates menu -->
+        <menuitem id="menu_formbuilder_templates"
+                  name="Templates"
+                  parent="menu_formbuilder_root"
+                  action="action_formbuilder_template"
+                  sequence="10"/>
+        
+        <!-- Questions menu -->
+        <menuitem id="menu_formbuilder_questions"
+                  name="Questions"
+                  parent="menu_formbuilder_root"
+                  action="action_formbuilder_question"
+                  sequence="20"/>
+        
+        <!-- Import menu -->
+        <menuitem id="menu_formbuilder_import"
+                  name="Import from API"
+                  parent="menu_formbuilder_root"
+                  action="action_formbuilder_import_wizard"
+                  sequence="30"/>
+    </data>
+</odoo>

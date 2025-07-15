@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FormBuilder.Core.Entities;
+using FormBuilder.Core.Models.Api;
 
 namespace FormBuilder.Core.Interfaces
 {
@@ -22,5 +23,6 @@ namespace FormBuilder.Core.Interfaces
         Task<bool> CanUserAccessTemplateAsync(int templateId, string userId);
         Task<bool> CanUserEditTemplateAsync(int templateId, string userId, bool isAdmin);
         Task<List<Topic>> GetTopicsAsync();
+        Task<TemplateAggregateResponse> GetTemplateAggregatesAsync(string userId);
     }
 }
