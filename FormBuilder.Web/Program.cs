@@ -64,6 +64,14 @@ try
     // Add TagService
     builder.Services.AddScoped<ITagService, TagService>();
 
+    // Dropbox configuration
+    builder.Services.Configure<DropboxConfig>(
+        builder.Configuration.GetSection("Dropbox"));
+
+    // Support Ticket Services
+    builder.Services.AddScoped<IDropboxService, DropboxService>();
+    builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
+
     // Salesforce configuration
     builder.Services.Configure<SalesforceConfig>(options =>
     {
@@ -120,6 +128,12 @@ try
                 Endpoint = "get:/api/v1/*",
                 Period = "1h",
                 Limit = 100,
+            },
+            new RateLimitRule
+            {
+                Endpoint = "post:/api/support/*",
+                Period = "1h",
+                Limit = 20,
             }
         };
     });

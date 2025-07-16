@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <!-- Theme CSS -->
     <link rel="stylesheet" href="~/css/themes/light.css" id="theme-style" />
+    <!-- Support CSS -->
+    <link rel="stylesheet" href="~/css/components/support.css" asp-append-version="true" />
 </head>
 <body>
 
@@ -215,6 +217,13 @@
     <script src="~/js/modules/theme-manager.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/modules/admin.js" asp-append-version="true"></script>
+    
+    <!-- Support System -->
+    <partial name="_SupportButton" />
+    <partial name="_SupportTicketModal" />
+    
+    <!-- Support Ticket JS -->
+    <script src="~/js/modules/support-ticket.js" asp-append-version="true"></script>
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>

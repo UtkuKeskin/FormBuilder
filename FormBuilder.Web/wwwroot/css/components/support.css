@@ -1,0 +1,102 @@
+/* Support Floating Button */
+.support-floating-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1040;
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+}
+
+.support-floating-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.support-floating-button i {
+    color: white;
+    font-size: 24px;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 20px rgba(102, 126, 234, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .support-floating-button {
+        width: 50px;
+        height: 50px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .support-floating-button i {
+        font-size: 20px;
+    }
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] .support-floating-button {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+/* Priority Badge Colors */
+.priority-high {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.priority-average {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.priority-low {
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Modal Customizations */
+#supportTicketModal .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#supportTicketModal .form-control:focus,
+#supportTicketModal .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Character Counter */
+#charCount {
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+#charCount.warning {
+    color: #ffc107;
+}
+
+#charCount.danger {
+    color: #dc3545;
+}

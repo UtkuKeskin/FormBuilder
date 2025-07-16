@@ -1,0 +1,77 @@
+<!-- Support Ticket Modal -->
+<div class="modal fade" id="supportTicketModal" tabindex="-1" aria-labelledby="supportTicketModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supportTicketModalLabel">
+                    <i class="fas fa-ticket-alt"></i> Create Support Ticket
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="supportTicketForm">
+                <div class="modal-body">
+                    <!-- Alert Container -->
+                    <div id="supportAlertContainer"></div>
+                    
+                    <!-- Priority -->
+                    <div class="mb-3">
+                        <label for="ticketPriority" class="form-label">
+                            Priority <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="ticketPriority" name="priority" required>
+                            <option value="">Select priority...</option>
+                            <option value="Low">Low - General question or feedback</option>
+                            <option value="Average">Average - Issue affecting usage</option>
+                            <option value="High">High - Critical issue or bug</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select a priority level.
+                        </div>
+                    </div>
+                    
+                    <!-- Summary -->
+                    <div class="mb-3">
+                        <label for="ticketSummary" class="form-label">
+                            Summary <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="ticketSummary" name="summary" rows="4" 
+                                  placeholder="Please describe your issue or question..." 
+                                  minlength="10" maxlength="500" required></textarea>
+                        <div class="form-text">
+                            <span id="charCount">0</span> / 500 characters
+                        </div>
+                        <div class="invalid-feedback">
+                            Summary must be between 10 and 500 characters.
+                        </div>
+                    </div>
+                    
+                    <!-- Current Page Info -->
+                    <div class="mb-3">
+                        <label class="form-label">Current Page</label>
+                        <input type="text" class="form-control-plaintext" id="currentPageDisplay" readonly>
+                        <input type="hidden" id="currentUrl" name="currentUrl">
+                        <input type="hidden" id="templateId" name="templateId">
+                    </div>
+                    
+                    <!-- User Info (if not authenticated) -->
+                    <div id="anonymousInfo" class="alert alert-info d-none">
+                        <i class="fas fa-info-circle"></i>
+                        You're submitting as a guest. <a href="/Account/Login">Login</a> for better support tracking.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitTicketBtn">
+                        <span id="submitBtnText">
+                            <i class="fas fa-paper-plane"></i> Submit Ticket
+                        </span>
+                        <span id="submitBtnSpinner" class="d-none">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Submitting...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

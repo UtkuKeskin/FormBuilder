@@ -1,0 +1,15 @@
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var userEmail = isAuthenticated ? User.Identity.Name : "anonymous@formbuilder.com";
+}
+
+<!-- Floating help button -->
+<div id="support-button" class="support-floating-button" data-bs-toggle="tooltip" data-bs-placement="left" title="Need help?">
+    <i class="fas fa-headset"></i>
+</div>
+
+<!-- Hidden data for JavaScript -->
+<div id="support-data" style="display: none;" 
+     data-authenticated="@isAuthenticated.ToString().ToLower()"
+     data-user-email="@userEmail">
+</div>
